@@ -13,6 +13,12 @@ export const checkUsernameAvailability = async (value) => {
   return Promise.resolve();
 };
 
+// Check if the username provided is consistent with regex pattern (starts with a letter and contains only word characters)
+export const checkUsernamePattern = (value) => {
+  const regex = /^[a-zA-z]\w+$/;
+  return regex.test(value);
+};
+
 // Check if passwords match
 export const checkPasswordsEquality = (value, { req }) => {
   return value === req.body.password;
