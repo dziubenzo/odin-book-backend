@@ -15,6 +15,10 @@ import { getFirstErrorMsg } from '../config/helpers.js';
 export const getAllUsers = asyncHandler(async (req, res, next) => {
   const allUsers = await User.find({}, '-password').exec();
 
+  if (allUsers.length === 0) {
+    return res.status(404).json(allUsers);
+  }
+
   return res.json(allUsers);
 });
 
@@ -69,7 +73,7 @@ export const createUser = [
     await new User({
       username,
       password: hashedPassword,
-      registration_date: Date.now(),
+      registered_at: Date.now(),
       avatar: '',
       bio: '',
       followed_users: [],

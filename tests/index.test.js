@@ -8,7 +8,7 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use('/', indexRouter);
 
-test('GET "/" works', (done) => {
+test('GET / works', (done) => {
   request(app)
     .get('/')
     .expect('Content-Type', /json/)

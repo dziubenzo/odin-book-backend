@@ -13,7 +13,7 @@ const UserSchema = new Schema({
     type: String,
     required: true,
   },
-  registration_date: {
+  registered_at: {
     type: Date,
     required: true,
   },
