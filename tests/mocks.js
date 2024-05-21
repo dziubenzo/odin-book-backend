@@ -17,3 +17,9 @@ export const user2 = {
   username: 'user2',
   password: 'password2',
 };
+
+export const validCredentials = {
+  username: 'user3',
+  password: 'password',
+  confirm_password: 'password',
+};
