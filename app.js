@@ -3,8 +3,8 @@ import 'dotenv/config.js';
 import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
-import mongoose from 'mongoose';
 import RateLimit from 'express-rate-limit';
+import './config/mongoDB.js';
 
 // Route imports
 import indexRouter from './routes/index.js';
@@ -18,17 +18,6 @@ const corsOptions = {
 
 const app = express();
 app.use(cors(corsOptions));
-
-// MongoDB connection
-mongoose.set('strictQuery', false);
-
-const mongoDB = process.env.MONGODB_URI;
-
-main().catch((err) => console.log(err));
-
-async function main() {
-  await mongoose.connect(mongoDB);
-}
 
 // Rate limiter: maximum of forty requests per minute
 const limiter = RateLimit({
