@@ -140,3 +140,12 @@ export const loginUser = [
     return res.json(token);
   }),
 ];
+
+// @desc    Authenticate user
+// @route   POST /users/auth
+export const authUser = [
+  passport.authenticate('jwt', { session: false }),
+  asyncHandler(async (req, res, next) => {
+    return res.json(req.user);
+  }),
+];
