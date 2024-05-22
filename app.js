@@ -6,6 +6,10 @@ import helmet from 'helmet';
 import RateLimit from 'express-rate-limit';
 import './config/mongoDB.js';
 
+// Authentication imports
+import passport from 'passport';
+import { jwtStrategy } from './config/passport.js';
+
 // Route imports
 import indexRouter from './routes/index.js';
 import userRouter from './routes/user.js';
@@ -32,6 +36,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(compression());
 app.use(helmet());
 app.use(limiter);
+
+// JWT authentication
+passport.use(jwtStrategy);
 
 // Routes
 app.use('/', indexRouter);
