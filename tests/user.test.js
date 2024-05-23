@@ -3,34 +3,47 @@ import User from '../models/User.js';
 
 import request from 'supertest';
 import express from 'express';
-import { user1, user2, validCredentials } from './mocks.js';
+import 'dotenv/config.js';
+import { user1, passwordUser1, user2, validCredentials } from './mocks.js';
 import { startMongoMemoryServer } from '../config/mongoDBTesting.js';
 
+import passport from 'passport';
+import { jwtStrategy } from '../config/passport.js';
+
 const app = express();
+passport.use(jwtStrategy);
 await startMongoMemoryServer();
 
 app.use(express.urlencoded({ extended: false }));
 app.use('/users', userRouter);
 
 describe('GET /users', () => {
-  describe('no users in the DB', () => {
-    it('should return a 404 and an empty array', (done) => {
-      request(app)
-        .get('/users')
-        .expect('Content-Type', /json/)
-        .expect(404, [], done);
+  describe('no auth', () => {
+    it('should return a 401', (done) => {
+      request(app).get('/users').expect(401, done);
     });
   });
 
-  describe('users in the DB', () => {
-    beforeEach(async () => {
+  describe('auth', () => {
+    let token = '';
+
+    beforeAll(async () => {
       await new User(user1).save();
       await new User(user2).save();
+
+      const response = await request(app)
+        .post('/users/login')
+        .type('form')
+        .send({ username: user1.username, password: passwordUser1 })
+        .expect(200);
+
+      token = response.body;
     });
 
     it('should return a 200 and an array of user objects', (done) => {
       request(app)
         .get('/users')
+        .auth(token, { type: 'bearer' })
         .expect('Content-Type', /json/)
         .expect((res) => {
           expect(res.body).toHaveLength(2);
