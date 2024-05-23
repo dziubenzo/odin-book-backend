@@ -186,3 +186,39 @@ describe('POST /users/login', () => {
     });
   });
 });
+
+describe('POST /users/auth', () => {
+  describe('no auth', () => {
+    it('should return a 401', (done) => {
+      request(app).post('/users/auth').expect(401, done);
+    });
+  });
+
+  describe('auth', () => {
+    let token = '';
+
+    beforeAll(async () => {
+      const response = await request(app)
+        .post('/users/login')
+        .type('form')
+        .send({ username: user1.username, password: passwordUser1 })
+        .expect(200);
+
+      token = response.body;
+    });
+
+    it('should return a 200 and a logged in user object without the password', (done) => {
+      request(app)
+        .post('/users/auth')
+        .auth(token, { type: 'bearer' })
+        .expect((res) => {
+          expect(res.body.username).toBe(user1.username);
+          expect(res.body).toHaveProperty('_id');
+          expect(res.body).toHaveProperty('bio');
+          expect(res.body).toHaveProperty('avatar');
+          expect(res.body).not.toHaveProperty('password');
+        })
+        .expect(200, done);
+    });
+  });
+});
