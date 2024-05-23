@@ -4,7 +4,13 @@ import User from '../models/User.js';
 import request from 'supertest';
 import express from 'express';
 import 'dotenv/config.js';
-import { user1, passwordUser1, user2, validCredentials } from './mocks.js';
+import {
+  user1,
+  passwordUser1,
+  user2,
+  passwordUser2,
+  validCredentials,
+} from './mocks.js';
 import { startMongoMemoryServer } from '../config/mongoDBTesting.js';
 
 import passport from 'passport';
@@ -141,6 +147,42 @@ describe('POST /users', () => {
         })
         .expect(/do not match/i)
         .expect(400, done);
+    });
+  });
+});
+
+describe('POST /users/login', () => {
+  describe('valid user credentials', () => {
+    it('should return a 200 and a string resembling a token', (done) => {
+      request(app)
+        .post('/users/login')
+        .type('form')
+        .send({ username: user1.username, password: passwordUser1 })
+        .expect((res) => {
+          expect(res.body.length).toBeGreaterThan(100);
+          expect(res.body.length).toBeLessThan(200);
+        })
+        .expect(200, done);
+    });
+  });
+
+  describe('invalid user credentials', () => {
+    it('should return a 401 and an error message if the username is incorrect', (done) => {
+      request(app)
+        .post('/users/login')
+        .type('form')
+        .send({ username: user2.username, password: passwordUser1 })
+        .expect(/invalid username/i)
+        .expect(401, done);
+    });
+
+    it('should return a 401 and an error message if the password is incorrect', (done) => {
+      request(app)
+        .post('/users/login')
+        .type('form')
+        .send({ username: user1.username, password: passwordUser2 })
+        .expect(/invalid username/i)
+        .expect(401, done);
     });
   });
 });
