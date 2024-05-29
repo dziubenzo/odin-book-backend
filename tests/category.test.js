@@ -13,7 +13,9 @@ import {
   category1,
   category2,
   category3,
+  longDescription,
 } from './mocks.js';
+import { defaultIcon } from '../config/helpers.js';
 
 import passport from 'passport';
 import { jwtStrategy } from '../config/passport.js';
@@ -38,9 +40,8 @@ describe('GET /categories', () => {
 
     beforeAll(async () => {
       await new User(user1).save();
-      await Promise.all[
-        (new Category(category1).save(), new Category(category2).save())
-      ];
+      await new Category(category1).save();
+      await new Category(category2).save();
 
       const response = await request(app)
         .post('/users/login')
@@ -62,6 +63,110 @@ describe('GET /categories', () => {
           expect(res.body[1]).toHaveProperty('name', category2.name);
         })
         .expect(200, done);
+    });
+  });
+});
+
+describe('POST /categories', () => {
+  let token = '';
+
+  beforeAll(async () => {
+    const response = await request(app)
+      .post('/users/login')
+      .type('form')
+      .send({ username: user1.username, password: passwordUser1 })
+      .expect(200);
+
+    token = response.body;
+  });
+
+  describe('valid category', () => {
+    it('should return a 200 and a success message', (done) => {
+      request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send(category3)
+        .expect(/successfully/i)
+        .expect(200, done);
+    });
+
+    it('should assign a default category icon if an icon is not provided', (done) => {
+      request(app)
+        .get('/categories')
+        .auth(token, { type: 'bearer' })
+        .expect((res) => {
+          expect(res.body[res.body.length - 1]).toHaveProperty(
+            'icon',
+            defaultIcon
+          );
+        })
+        .expect(200, done);
+    });
+  });
+
+  describe('invalid category', () => {
+    it('should return a 400 and an error message if the name is too short', (done) => {
+      request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ ...category3, name: 'sh' })
+        .expect(/name must contain between/i)
+        .expect(400, done);
+    });
+
+    it('should return a 400 and an error message if the name is too long', (done) => {
+      request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({
+          ...category3,
+          name: 'a-very-very-very-very-verylongname',
+        })
+        .expect(/name must contain between/i)
+        .expect(400, done);
+    });
+
+    it('should return a 400 and an error message if the name does not match the pattern', (done) => {
+      request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ ...category3, name: '99badcategory' })
+        .expect(/start with a letter/i)
+        .expect(400, done);
+    });
+
+    it('should return a 400 and an error message if the name is already taken', (done) => {
+      request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send(category3)
+        .expect(/already exists/i)
+        .expect(400, done);
+    });
+
+    it('should return a 400 and an error message if the description is too short', (done) => {
+      request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ name: 'validname', description: 'de' })
+        .expect(/description must contain between/i)
+        .expect(400, done);
+    });
+
+    it('should return a 400 and an error message if the description is too long', (done) => {
+      request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ name: 'validname', description: longDescription })
+        .expect(/description must contain between/i)
+        .expect(400, done);
     });
   });
 });
