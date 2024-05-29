@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Category from '../models/Category.js';
 
 import passport from 'passport';
 
@@ -15,8 +16,8 @@ export const checkUsernameAvailability = async (value) => {
   return Promise.resolve();
 };
 
-// Check if the username provided is consistent with regex pattern (starts with a letter and contains only word characters)
-export const checkUsernamePattern = (value) => {
+// Check if the username/category name provided is consistent with regex pattern (starts with a letter and contains only word characters)
+export const checkPattern = (value) => {
   const regex = /^[a-zA-z]\w+$/;
   return regex.test(value);
 };
@@ -24,6 +25,19 @@ export const checkUsernamePattern = (value) => {
 // Check if passwords match
 export const checkPasswordsEquality = (value, { req }) => {
   return value === req.body.password;
+};
+
+// Check if the category name provided is available (case-insensitive)
+export const checkCategoryNameAvailability = async (value) => {
+  const categoryNameTaken = await Category.exists({
+    name: { $regex: value, $options: 'i' },
+  })
+    .lean()
+    .exec();
+  if (categoryNameTaken) {
+    return Promise.reject();
+  }
+  return Promise.resolve();
 };
 
 // Check if user is authenticated

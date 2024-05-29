@@ -5,7 +5,7 @@ import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import {
   checkPasswordsEquality,
-  checkUsernamePattern,
+  checkPattern,
   checkUsernameAvailability,
   checkAuth,
 } from '../config/middleware.js';
@@ -31,7 +31,7 @@ export const createUser = [
     .trim()
     .isLength({ min: 3, max: 16 })
     .withMessage('Username must contain between 3 and 16 characters')
-    .custom(checkUsernamePattern)
+    .custom(checkPattern)
     .withMessage(
       'Username must start with a letter and contain only a-z, A-Z and 0-9 characters'
     )

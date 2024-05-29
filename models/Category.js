@@ -9,7 +9,7 @@ const CategorySchema = new Schema({
     minLength: 3,
     maxLength: 32,
   },
-  thumbnail: {
+  icon: {
     type: String,
   },
   description: {
@@ -19,6 +19,10 @@ const CategorySchema = new Schema({
   },
   created_at: {
     type: Date,
+    required: true,
+  },
+  slug: {
+    type: String,
     required: true,
   },
 });

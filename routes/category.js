@@ -1,6 +1,9 @@
 import { Router } from 'express';
 
-import { getAllCategories } from '../controllers/categoryController.js';
+import {
+  createCategory,
+  getAllCategories,
+} from '../controllers/categoryController.js';
 import { checkAuth } from '../config/middleware.js';
 
 const router = Router();
@@ -9,5 +12,7 @@ const router = Router();
 router.use(checkAuth);
 
 router.get('/', getAllCategories);
+
+router.post('/', createCategory);
 
 export default router;
