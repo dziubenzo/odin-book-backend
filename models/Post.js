@@ -8,10 +8,16 @@ const PostSchema = new Schema({
     ref: 'User',
     required: true,
   },
+  title: {
+    type: String,
+    required: true,
+    minLength: 3,
+    maxLength: 64,
+  },
   content: {
     type: String,
     required: true,
-    minLength: 16,
+    minLength: 8,
   },
   category: {
     type: Schema.Types.ObjectId,
@@ -34,6 +40,10 @@ const PostSchema = new Schema({
       ref: 'Comment',
     },
   ],
+  slug: {
+    type: String,
+    required: true,
+  },
 });
 
 export default mongoose.model('Post', PostSchema);

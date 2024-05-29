@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { getAllPosts } from '../controllers/postController.js';
+import { getAllPosts, createPost } from '../controllers/postController.js';
 import { checkAuth } from '../config/middleware.js';
 
 const router = Router();
@@ -9,5 +9,7 @@ const router = Router();
 router.use(checkAuth);
 
 router.get('/', getAllPosts);
+
+router.post('/', createPost);
 
 export default router;
