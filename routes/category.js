@@ -3,6 +3,7 @@ import { Router } from 'express';
 import {
   createCategory,
   getAllCategories,
+  getSingleCategory,
 } from '../controllers/categoryController.js';
 import { checkAuth } from '../config/middleware.js';
 
@@ -14,5 +15,7 @@ router.use(checkAuth);
 router.get('/', getAllCategories);
 
 router.post('/', createCategory);
+
+router.get('/:slug', getSingleCategory);
 
 export default router;

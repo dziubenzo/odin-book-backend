@@ -63,3 +63,17 @@ export const createCategory = [
     return res.json('Category created successfully!');
   }),
 ];
+
+// @desc    Get single category
+// @route   GET /categories/:slug
+export const getSingleCategory = asyncHandler(async (req, res, next) => {
+  const slug = req.params.slug;
+
+  const category = await Category.findOne({ slug }).exec();
+
+  if (!category) {
+    return res.status(404).json('Category not found');
+  }
+
+  return res.json(category);
+});
