@@ -1,5 +1,7 @@
 import User from '../models/User.js';
 
+import passport from 'passport';
+
 // Check if the username provided is available (case-insensitive)
 export const checkUsernameAvailability = async (value) => {
   const usernameTaken = await User.exists({
@@ -23,3 +25,6 @@ export const checkUsernamePattern = (value) => {
 export const checkPasswordsEquality = (value, { req }) => {
   return value === req.body.password;
 };
+
+// Check if user is authenticated
+export const checkAuth = passport.authenticate('jwt', { session: false });

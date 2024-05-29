@@ -7,16 +7,16 @@ import {
   checkPasswordsEquality,
   checkUsernamePattern,
   checkUsernameAvailability,
+  checkAuth,
 } from '../config/middleware.js';
 import { getFirstErrorMsg } from '../config/helpers.js';
 
-import passport from 'passport';
 import jwt from 'jsonwebtoken';
 
 // @desc    Get all users
 // @route   GET /users
 export const getAllUsers = [
-  passport.authenticate('jwt', { session: false }),
+  checkAuth,
   asyncHandler(async (req, res, next) => {
     const allUsers = await User.find({}, '-password').exec();
 
@@ -140,7 +140,7 @@ export const loginUser = [
 // @desc    Authenticate user
 // @route   POST /users/auth
 export const authUser = [
-  passport.authenticate('jwt', { session: false }),
+  checkAuth,
   asyncHandler(async (req, res, next) => {
     return res.json(req.user);
   }),

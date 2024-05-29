@@ -13,6 +13,7 @@ import { jwtStrategy } from './config/passport.js';
 // Route imports
 import indexRouter from './routes/index.js';
 import userRouter from './routes/user.js';
+import categoryRouter from './routes/category.js';
 
 // CORS options - allowed site(s)
 // No '/' at the end
@@ -35,7 +36,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(compression());
 app.use(helmet());
+/* 
+ENABLE LATER
 app.use(limiter);
+ENABLE LATER
+*/
 
 // JWT authentication
 passport.use(jwtStrategy);
@@ -43,6 +48,7 @@ passport.use(jwtStrategy);
 // Routes
 app.use('/', indexRouter);
 app.use('/users', userRouter);
+app.use('/categories', categoryRouter);
 
 // Error handler
 app.use((err, req, res, next) => {
