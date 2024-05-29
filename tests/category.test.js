@@ -170,3 +170,42 @@ describe('POST /categories', () => {
     });
   });
 });
+
+describe('GET /categories/:slug', () => {
+  let token = '';
+
+  beforeAll(async () => {
+    const response = await request(app)
+      .post('/users/login')
+      .type('form')
+      .send({ username: user1.username, password: passwordUser1 })
+      .expect(200);
+
+    token = response.body;
+  });
+
+  describe('category exists', () => {
+    it('should return a 200 and the requested category object', (done) => {
+      request(app)
+        .get(`/categories/${category1.slug}`)
+        .auth(token, { type: 'bearer' })
+        .expect('Content-Type', /json/)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('name', category1.name);
+          expect(res.body).toHaveProperty('description', category1.description);
+          expect(res.body).toHaveProperty('slug', category1.slug);
+        })
+        .expect(200, done);
+    });
+  });
+
+  describe('category does not exists', () => {
+    it('should return a 404 and an error message', (done) => {
+      request(app)
+        .get(`/categories/i-do-not-exist`)
+        .auth(token, { type: 'bearer' })
+        .expect(/category not found/i)
+        .expect(404, done);
+    });
+  });
+});
