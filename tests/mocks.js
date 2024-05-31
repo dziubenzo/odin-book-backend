@@ -77,14 +77,15 @@ Posts
 
 export const idPost1 = new mongoose.Types.ObjectId();
 export const idPost2 = new mongoose.Types.ObjectId();
+export const idPost3 = new mongoose.Types.ObjectId();
 
 export const post1 = {
   _id: idPost1,
-  author: idUser1,
+  author: idUser1.toString(),
   title: 'Post 1',
   content: 'Post 1 Content, yay!',
-  category: idCategory1,
-  // Make the date later for comparison purposes
+  category: idCategory1.toString(),
+  // Make the date 1 second later for comparison purposes
   created_at: Date.now() + 1000,
   likes: [],
   comments: [],
@@ -96,7 +97,17 @@ export const post2 = {
   _id: idPost2,
   title: 'Post 2',
   content: 'Post 2 Content, yay!',
-  category: idCategory2,
+  category: idCategory2.toString(),
   created_at: Date.now(),
   slug: slugify('Post 2', { lower: true }),
+};
+
+export const post3 = {
+  ...post1,
+  _id: idPost3,
+  title: 'Post 3',
+  content: 'Post 3 Content, yay!',
+  category: idCategory1.toString(),
+  created_at: Date.now(),
+  slug: slugify('Post 3', { lower: true }),
 };
