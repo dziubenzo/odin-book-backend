@@ -70,6 +70,18 @@ describe('GET /posts', () => {
           })
           .expect(200, done);
       });
+
+      it('should return post objects with populated author and category fields', (done) => {
+        request(app)
+          .get('/posts')
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect((res) => {
+            expect(res.body[0]).toHaveProperty('author.username', user1.username);
+            expect(res.body[0]).toHaveProperty('category.name', category1.name);
+          })
+          .expect(200, done);
+      });
     });
 
     describe('with limit query parameter', () => {

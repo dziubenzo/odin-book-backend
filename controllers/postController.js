@@ -31,6 +31,8 @@ export const getAllPosts = [
     const limit = req.query.limit;
 
     const allPosts = await Post.find({})
+      .populate({ path: 'author', select: 'username' })
+      .populate({ path: 'category', select: 'name' })
       .sort({ created_at: -1 })
       .limit(limit ?? limit)
       .exec();
