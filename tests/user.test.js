@@ -190,7 +190,11 @@ describe('POST /users/login', () => {
 describe('POST /users/auth', () => {
   describe('no auth', () => {
     it('should return a 401', (done) => {
-      request(app).post('/users/auth').expect(401, done);
+      request(app)
+        .post('/users/auth')
+        .type('form')
+        .send({ username: user1.username, password: passwordUser1 })
+        .expect(401, done);
     });
   });
 

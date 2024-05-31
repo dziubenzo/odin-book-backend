@@ -80,6 +80,16 @@ describe('POST /categories', () => {
     token = response.body;
   });
 
+  describe('no auth', () => {
+    it('should return a 401', (done) => {
+      request(app)
+        .post('/categories')
+        .type('form')
+        .send(category3)
+        .expect(401, done);
+    });
+  });
+
   describe('valid category', () => {
     it('should return a 200 and a success message', (done) => {
       request(app)
@@ -184,6 +194,12 @@ describe('GET /categories/:slug', () => {
     token = response.body;
   });
 
+  describe('no auth', () => {
+    it('should return a 401', (done) => {
+      request(app).get(`/categories/${category1.slug}`).expect(401, done);
+    });
+  });
+
   describe('category exists', () => {
     it('should return a 200 and the requested category object', (done) => {
       request(app)
@@ -199,7 +215,7 @@ describe('GET /categories/:slug', () => {
     });
   });
 
-  describe('category does not exists', () => {
+  describe('category does not exist', () => {
     it('should return a 404 and an error message', (done) => {
       request(app)
         .get(`/categories/i-do-not-exist`)
