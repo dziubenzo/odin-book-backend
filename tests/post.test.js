@@ -223,3 +223,48 @@ describe('POST /posts', () => {
     });
   });
 });
+
+describe('GET /posts/:slug', () => {
+  let token = '';
+
+  beforeAll(async () => {
+    const response = await request(app)
+      .post('/users/login')
+      .type('form')
+      .send({ username: user1.username, password: passwordUser1 })
+      .expect(200);
+
+    token = response.body;
+  });
+
+  describe('no auth', () => {
+    it('should return a 401', (done) => {
+      request(app).get(`/posts/${post1.slug}`).expect(401, done);
+    });
+  });
+
+  describe('post exists', () => {
+    it('should return a 200 and the requested post object with populated author and category fields', (done) => {
+      request(app)
+        .get(`/posts/${post1.slug}`)
+        .auth(token, { type: 'bearer' })
+        .expect('Content-Type', /json/)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('title', post1.title);
+          expect(res.body).toHaveProperty('author.username', user1.username);
+          expect(res.body).toHaveProperty('category.name', category1.name);
+        })
+        .expect(200, done);
+    });
+  });
+
+  describe('post does not exist', () => {
+    it('should return a 404 and an error message', (done) => {
+      request(app)
+        .get(`/posts/i-do-not-exist`)
+        .auth(token, { type: 'bearer' })
+        .expect(/post not found/i)
+        .expect(404, done);
+    });
+  });
+});
