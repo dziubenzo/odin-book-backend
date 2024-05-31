@@ -1,6 +1,7 @@
 import Post from '../models/Post.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
+import Comment from '../models/Comment.js';
 
 import asyncHandler from 'express-async-handler';
 import { body, query, validationResult } from 'express-validator';
@@ -103,3 +104,30 @@ export const createPost = [
     return res.json('Post created successfully!');
   }),
 ];
+
+// @desc    Get single post
+// @route   GET /posts/:slug
+export const getSinglePost = asyncHandler(async (req, res, next) => {
+  const slug = req.params.slug;
+
+  const post = await Post.findOne({ slug })
+    .populate({ path: 'author', select: 'username' })
+    .populate({ path: 'category', select: 'name' })
+    .populate({
+      path: 'likes',
+      select: 'author',
+      populate: { path: 'author', select: 'username' },
+    })
+    .populate({
+      path: 'comments',
+      model: Comment,
+      populate: { path: 'author', select: 'username' },
+    })
+    .exec();
+
+  if (!post) {
+    return res.status(404).json('Post not found');
+  }
+
+  return res.json(post);
+});
