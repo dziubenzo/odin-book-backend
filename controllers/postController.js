@@ -161,21 +161,15 @@ export const likePost = [
     }
 
     // Check if the post is already liked by the user
-    const { likes: currentPostLikes } = await Post.findOne(
-      { slug },
-      'likes -_id'
-    );
+    const post = await Post.findOne({ slug });
 
-    if (currentPostLikes.includes(user)) {
+    if (post.likes.includes(user)) {
       return res.json("You've already liked this post!");
     }
 
     // Push new like to the post
-    const updatedPost = await Post.findOneAndUpdate(
-      { slug },
-      { $push: { likes: user } },
-      { new: true }
-    );
+    post.likes.push(user);
+    await post.save();
 
     return res.json('Post liked successfully!');
   }),
