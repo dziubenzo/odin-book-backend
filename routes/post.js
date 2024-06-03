@@ -5,6 +5,7 @@ import {
   createPost,
   getSinglePost,
   likePost,
+  unlikePost,
 } from '../controllers/postController.js';
 import { checkAuth } from '../config/middleware.js';
 
@@ -21,6 +22,6 @@ router.get('/:slug', getSinglePost);
 
 router.put('/:slug/like', likePost);
 
-// router.put('/:slug/unlike', unlikePost);
+router.put('/:slug/unlike', unlikePost);
 
 export default router;
