@@ -15,6 +15,7 @@ import indexRouter from './routes/index.js';
 import userRouter from './routes/user.js';
 import categoryRouter from './routes/category.js';
 import postRouter from './routes/post.js';
+import commentRouter from './routes/comment.js';
 
 // CORS options - allowed site(s)
 // No '/' at the end
@@ -51,6 +52,7 @@ app.use('/', indexRouter);
 app.use('/users', userRouter);
 app.use('/categories', categoryRouter);
 app.use('/posts', postRouter);
+app.use('/posts/:slug/comments', commentRouter);
 
 // Error handler
 app.use((err, req, res, next) => {
