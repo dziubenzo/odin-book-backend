@@ -116,8 +116,7 @@ export const getSinglePost = asyncHandler(async (req, res, next) => {
     .populate({ path: 'category', select: 'name' })
     .populate({
       path: 'likes',
-      select: 'author',
-      populate: { path: 'author', select: 'username' },
+      select: 'username',
     })
     .populate({
       path: 'comments',
@@ -131,3 +130,53 @@ export const getSinglePost = asyncHandler(async (req, res, next) => {
 
   return res.json(post);
 });
+
+// @desc    Like post
+// @route   PUT /posts/:slug/like
+export const likePost = [
+  body('user')
+    .trim()
+    .isMongoId()
+    .withMessage('User field must be a valid MongoDB ID'),
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Return the first validation error message if there are any errors
+      const firstErrorMsg = getFirstErrorMsg(errors);
+      return res.status(400).json(firstErrorMsg);
+    }
+
+    const slug = req.params.slug;
+    const user = req.body.user;
+
+    // Make sure the user exists
+    const userExists = await User.findById(user).exec();
+
+    if (!userExists) {
+      return res
+        .status(400)
+        .json('Error while liking a post. Please try again');
+    }
+
+    // Check if the post is already liked by the user
+    const { likes: currentPostLikes } = await Post.findOne(
+      { slug },
+      'likes -_id'
+    );
+
+    if (currentPostLikes.includes(user)) {
+      return res.json("You've already liked this post!");
+    }
+
+    // Push new like to the post
+    const updatedPost = await Post.findOneAndUpdate(
+      { slug },
+      { $push: { likes: user } },
+      { new: true }
+    );
+
+    return res.json('Post liked successfully!');
+  }),
+];
