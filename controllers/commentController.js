@@ -95,3 +95,53 @@ export const likeComment = [
     return res.json('Comment liked successfully!');
   }),
 ];
+
+// @desc    Unlike post comment
+// @route   PUT /posts/:slug/comments/:commentID/unlike
+export const unlikeComment = [
+  body('user')
+    .trim()
+    .isMongoId()
+    .withMessage('User field must be a valid MongoDB ID'),
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Return the first validation error message if there are any errors
+      const firstErrorMsg = getFirstErrorMsg(errors);
+      return res.status(400).json(firstErrorMsg);
+    }
+
+    const user = req.body.user;
+    const commentID = req.params.commentID;
+
+    // Make sure the user exists
+    const userExists = await User.findById(user).exec();
+
+    if (!userExists) {
+      return res
+        .status(400)
+        .json('Error while unliking a post comment. Please try again');
+    }
+
+    // Make sure the post comment is already liked by the user
+    const { likes: currentCommentLikes } = await Comment.findOne(
+      { _id: commentID },
+      'likes -_id'
+    );
+
+    if (!currentCommentLikes.includes(user)) {
+      return res.json('Like the comment first to unlike it!');
+    }
+
+    // Remove like from the post comment
+    const updatedComment = await Comment.findOneAndUpdate(
+      { _id: commentID },
+      { $pull: { likes: user } },
+      { new: true }
+    );
+
+    return res.json('Comment unliked successfully!');
+  }),
+];
