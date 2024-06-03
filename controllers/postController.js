@@ -1,7 +1,6 @@
 import Post from '../models/Post.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
-import Comment from '../models/Comment.js';
 
 import asyncHandler from 'express-async-handler';
 import { body, query, validationResult } from 'express-validator';
@@ -91,14 +90,14 @@ export const createPost = [
     // Generate a random eight-character string to add to the end of the slug to ensure that the slug is unique
     const uniqueString = '-' + crypto.randomUUID().slice(0, 8);
 
-    // Create new post
+    // Create new post and make it liked by post author by default
     await new Post({
       author,
       title,
       content,
       category,
       created_at: Date.now(),
-      likes: [],
+      likes: [author],
       comments: [],
       slug: slugify(title + uniqueString, { lower: true }),
     }).save();
@@ -122,7 +121,6 @@ export const getSinglePost = asyncHandler(async (req, res, next) => {
     })
     .populate({
       path: 'comments',
-      model: Comment,
       populate: { path: 'author', select: 'username' },
     })
     .exec();
