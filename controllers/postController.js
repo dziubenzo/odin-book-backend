@@ -91,7 +91,7 @@ export const createPost = [
     const uniqueString = '-' + crypto.randomUUID().slice(0, 8);
 
     // Create new post and make it liked by post author by default
-    await new Post({
+    const newPost = await new Post({
       author,
       title,
       content,
@@ -102,7 +102,8 @@ export const createPost = [
       slug: slugify(title + uniqueString, { lower: true }),
     }).save();
 
-    return res.json('Post created successfully!');
+    // Return new post
+    return res.json(newPost);
   }),
 ];
 
@@ -114,10 +115,7 @@ export const getSinglePost = asyncHandler(async (req, res, next) => {
   const post = await Post.findOne({ slug })
     .populate({ path: 'author', select: 'username' })
     .populate({ path: 'category', select: 'name' })
-    .populate({
-      path: 'likes',
-      select: 'username',
-    })
+    .populate({ path: 'likes', select: 'username' })
     .populate({
       path: 'comments',
       populate: { path: 'author', select: 'username' },
@@ -164,7 +162,7 @@ export const likePost = [
     const post = await Post.findOne({ slug });
 
     if (post.likes.includes(user)) {
-      return res.json("You've already liked this post!");
+      return res.status(400).json("You've already liked this post!");
     }
 
     // Push new like to the post

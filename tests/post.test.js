@@ -3,6 +3,7 @@ import Post from '../models/Post.js';
 import userRouter from '../routes/user.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
+import commentRouter from '../routes/comment.js';
 
 import request from 'supertest';
 import express from 'express';
@@ -29,6 +30,7 @@ await startMongoMemoryServer();
 app.use(express.urlencoded({ extended: false }));
 app.use('/users', userRouter);
 app.use('/posts', postRouter);
+app.use('/posts/:slug/comments', commentRouter);
 
 describe('GET /posts', () => {
   describe('no auth', () => {
@@ -77,7 +79,10 @@ describe('GET /posts', () => {
           .auth(token, { type: 'bearer' })
           .expect('Content-Type', /json/)
           .expect((res) => {
-            expect(res.body[0]).toHaveProperty('author.username', user1.username);
+            expect(res.body[0]).toHaveProperty(
+              'author.username',
+              user1.username
+            );
             expect(res.body[0]).toHaveProperty('category.name', category1.name);
           })
           .expect(200, done);
@@ -132,13 +137,18 @@ describe('POST /posts', () => {
   });
 
   describe('valid post', () => {
-    it('should return a 200 and a success message', (done) => {
+    it('should return a 200 and the new post that is liked by the post author', (done) => {
       request(app)
         .post('/posts')
         .auth(token, { type: 'bearer' })
         .type('form')
         .send(post3)
-        .expect(/successfully/i)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('author', post3.author);
+          expect(res.body).toHaveProperty('content', post3.content);
+          expect(res.body.likes).toHaveLength(1);
+          expect(res.body.likes).toContain(post3.author);
+        })
         .expect(200, done);
     });
   });
@@ -265,6 +275,76 @@ describe('GET /posts/:slug', () => {
         .auth(token, { type: 'bearer' })
         .expect(/post not found/i)
         .expect(404, done);
+    });
+  });
+});
+
+describe('PUT /posts/:slug/like', () => {
+  let token = '';
+
+  beforeAll(async () => {
+    const response = await request(app)
+      .post('/users/login')
+      .type('form')
+      .send({ username: user1.username, password: passwordUser1 })
+      .expect(200);
+
+    token = response.body;
+  });
+
+  describe('no auth', () => {
+    it('should return a 401', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/like`)
+        .type('form')
+        .send({ user: user1._id })
+        .expect(401, done);
+    });
+  });
+
+  describe('invalid user', () => {
+    it('should return a 400 and an error message if the user is not a valid MongoDB ID', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/like`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: 'Valid user, surely!' })
+        .expect(/user field must be/i)
+        .expect(400, done);
+    });
+
+    it('should return a 400 and an error message if the user is not in the DB', (done) => {
+      const validMongoID = new mongoose.Types.ObjectId().toString();
+
+      request(app)
+        .put(`/posts/${post1.slug}/like`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: validMongoID })
+        .expect(/error while/i)
+        .expect(400, done);
+    });
+  });
+
+  describe('valid user', () => {
+    it('should return a 200 and a success message', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/like`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: user1._id.toString() })
+        .expect(/liked successfully/i)
+        .expect(200, done);
+    });
+
+    it('should return a 400 and an error message if the user has already liked the post', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/like`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: user1._id.toString() })
+        .expect(/already liked/i)
+        .expect(400, done);
     });
   });
 });
