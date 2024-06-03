@@ -297,7 +297,7 @@ describe('PUT /posts/:slug/like', () => {
       request(app)
         .put(`/posts/${post1.slug}/like`)
         .type('form')
-        .send({ user: user1._id })
+        .send({ user: user1._id.toString() })
         .expect(401, done);
     });
   });

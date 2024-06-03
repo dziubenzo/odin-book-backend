@@ -4,6 +4,7 @@ import userRouter from '../routes/user.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import commentRouter from '../routes/comment.js';
+import Comment from '../models/Comment.js';
 
 import request from 'supertest';
 import express from 'express';
@@ -15,6 +16,8 @@ import {
   category1,
   post1,
   longDescription,
+  idComment2,
+  comment2,
 } from './mocks.js';
 import mongoose from 'mongoose';
 
@@ -123,6 +126,78 @@ describe('POST /posts/:slug/comments', () => {
           .expect(/error while/i)
           .expect(400, done);
       });
+    });
+  });
+});
+
+describe('PUT /posts/:slug/comments/:commentID/like', () => {
+  let token = '';
+
+  beforeAll(async () => {
+    await new Comment(comment2).save();
+
+    const response = await request(app)
+      .post('/users/login')
+      .type('form')
+      .send({ username: user1.username, password: passwordUser1 })
+      .expect(200);
+
+    token = response.body;
+  });
+
+  describe('no auth', () => {
+    it('should return a 401', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
+        .type('form')
+        .send({ user: user1._id })
+        .expect(401, done);
+    });
+  });
+
+  describe('invalid user', () => {
+    it('should return a 400 and an error message if the user is not a valid MongoDB ID', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: 'SuperUser' })
+        .expect(/user field must be/i)
+        .expect(400, done);
+    });
+
+    it('should return a 400 and an error message if the user is not in the DB', (done) => {
+      const validMongoID = new mongoose.Types.ObjectId().toString();
+
+      request(app)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: validMongoID })
+        .expect(/error while/i)
+        .expect(400, done);
+    });
+  });
+
+  describe('valid user', () => {
+    it('should return a 200 and a success message', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: user1._id.toString() })
+        .expect(/liked successfully/i)
+        .expect(200, done);
+    });
+
+    it('should return a 400 and an error message if the user has already liked the comment', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: user1._id.toString() })
+        .expect(/already liked/i)
+        .expect(400, done);
     });
   });
 });

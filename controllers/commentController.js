@@ -101,7 +101,7 @@ export const likeComment = [
     const comment = await Comment.findOne({ _id: commentID });
 
     if (comment.likes.includes(user)) {
-      return res.json("You've already liked this comment!");
+      return res.status(400).json("You've already liked this comment!");
     }
 
     // Push new like to the post comment
@@ -148,7 +148,7 @@ export const unlikeComment = [
     );
 
     if (!currentCommentLikes.includes(user)) {
-      return res.json('Like the comment first to unlike it!');
+      return res.status(400).json('Like the comment first to unlike it!');
     }
 
     // Remove like from the post comment

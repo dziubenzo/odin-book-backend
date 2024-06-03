@@ -111,3 +111,17 @@ export const post3 = {
   created_at: Date.now(),
   slug: slugify('Post 3', { lower: true }),
 };
+
+/* 
+Comments
+*/
+
+export const idComment2 = new mongoose.Types.ObjectId();
+
+export const comment2 = {
+  _id: idComment2,
+  author: idUser1.toString(),
+  content: 'Comment 2, woo hoo!',
+  created_at: Date.now(),
+  likes: [],
+};
