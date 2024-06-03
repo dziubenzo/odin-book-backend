@@ -209,7 +209,7 @@ export const unlikePost = [
     );
 
     if (!currentPostLikes.includes(user)) {
-      return res.json('Like the post first to unlike it!');
+      return res.status(400).json('Like the post first to unlike it!');
     }
 
     // Remove like from the post

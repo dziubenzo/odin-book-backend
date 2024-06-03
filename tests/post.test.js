@@ -348,3 +348,73 @@ describe('PUT /posts/:slug/like', () => {
     });
   });
 });
+
+describe('PUT /posts/:slug/unlike', () => {
+  let token = '';
+
+  beforeAll(async () => {
+    const response = await request(app)
+      .post('/users/login')
+      .type('form')
+      .send({ username: user1.username, password: passwordUser1 })
+      .expect(200);
+
+    token = response.body;
+  });
+
+  describe('no auth', () => {
+    it('should return a 401', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/unlike`)
+        .type('form')
+        .send({ user: user1._id })
+        .expect(401, done);
+    });
+  });
+
+  describe('invalid user', () => {
+    it('should return a 400 and an error message if the user is not a valid MongoDB ID', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/unlike`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: 'Valid user, yep!' })
+        .expect(/user field must be/i)
+        .expect(400, done);
+    });
+
+    it('should return a 400 and an error message if the user is not in the DB', (done) => {
+      const validMongoID = new mongoose.Types.ObjectId().toString();
+
+      request(app)
+        .put(`/posts/${post1.slug}/unlike`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: validMongoID })
+        .expect(/error while/i)
+        .expect(400, done);
+    });
+  });
+
+  describe('valid user', () => {
+    it('should return a 200 and a success message', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/unlike`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: user1._id.toString() })
+        .expect(/unliked successfully/i)
+        .expect(200, done);
+    });
+
+    it('should return a 400 and an error message if the user has not liked the post', (done) => {
+      request(app)
+        .put(`/posts/${post1.slug}/unlike`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user: user1._id.toString() })
+        .expect(/like the post first/i)
+        .expect(400, done);
+    });
+  });
+});
