@@ -1,6 +1,5 @@
 import Post from '../models/Post.js';
 import User from '../models/User.js';
-import Category from '../models/Category.js';
 import Comment from '../models/Comment.js';
 
 import asyncHandler from 'express-async-handler';
@@ -32,6 +31,15 @@ export const createComment = [
     const author = req.body.author;
     const content = req.body.content;
 
+    // Make sure the user exists
+    const userExists = await User.findById(author).exec();
+
+    if (!userExists) {
+      return res
+        .status(400)
+        .json('Error while creating a post comment. Please try again');
+    }
+
     // Create comment and make it liked by comment author by default
     const comment = await new Comment({
       author,
@@ -45,9 +53,17 @@ export const createComment = [
       { slug },
       { $push: { comments: comment } },
       { new: true }
-    );
+    )
+      .populate({ path: 'author', select: 'username' })
+      .populate({ path: 'category', select: 'name' })
+      .populate({ path: 'likes', select: 'username' })
+      .populate({
+        path: 'comments',
+        populate: { path: 'author', select: 'username' },
+      })
+      .exec();
 
-    // Return updated post
+    // Return updated post with all fields populated
     res.json(updatedPost);
   }),
 ];
