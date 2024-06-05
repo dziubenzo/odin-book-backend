@@ -158,21 +158,22 @@ export const likePost = [
         .json('Error while liking a post. Please try again');
     }
 
-    // Check if the post is already liked by the user
     const post = await Post.findOne({ slug });
 
+    // Only remove like if the post is already liked by the user
     if (post.likes.includes(user)) {
-      return res.status(400).json("You've already liked this post!");
+      const index = post.likes.indexOf(user);
+      post.likes.splice(index, 1);
+      await post.save();
+
+      return res.json('Post unliked successfully!');
     }
 
-    // Remove dislike from the post if it exists
+    // Otherwise remove dislike from the post if it exists and push like to the post
     const index = post.dislikes.indexOf(user);
-
     if (index !== -1) {
       post.dislikes.splice(index, 1);
     }
-
-    // Push new like to the post
     post.likes.push(user);
     await post.save();
 
@@ -212,18 +213,20 @@ export const dislikePost = [
     // Check if the post is already disliked by the user
     const post = await Post.findOne({ slug });
 
+    // Only remove dislike if the post is already disliked by the user
     if (post.dislikes.includes(user)) {
-      return res.status(400).json("You've already disliked this post!");
+      const index = post.dislikes.indexOf(user);
+      post.dislikes.splice(index, 1);
+      await post.save();
+
+      return res.json('Post undisliked successfully!');
     }
 
-    // Remove like from the post if it exists
+    // Otherwise remove like from the post if it exists and push dislike to the post
     const index = post.likes.indexOf(user);
-
     if (index !== -1) {
       post.likes.splice(index, 1);
     }
-
-    // Push dislike to the post
     post.dislikes.push(user);
     await post.save();
 

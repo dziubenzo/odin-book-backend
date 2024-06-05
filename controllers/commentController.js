@@ -97,21 +97,22 @@ export const likeComment = [
         .json('Error while liking a post comment. Please try again');
     }
 
-    // Check if the post comment is already liked by the user
     const comment = await Comment.findOne({ _id: commentID });
 
+    // Only remove like if the post comment is already liked by the user
     if (comment.likes.includes(user)) {
-      return res.status(400).json("You've already liked this comment!");
+      const index = comment.likes.indexOf(user);
+      comment.likes.splice(index, 1);
+      await comment.save();
+
+      return res.json('Comment unliked successfully!');
     }
 
-    // Remove dislike from the post comment if it exists
+    // Otherwise remove dislike from the post comment if it exists and push like to the post
     const index = comment.dislikes.indexOf(user);
-
     if (index !== -1) {
       comment.dislikes.splice(index, 1);
     }
-
-    // Push new like to the post comment
     comment.likes.push(user);
     await comment.save();
 
@@ -148,21 +149,22 @@ export const dislikeComment = [
         .json('Error while disliking a post comment. Please try again');
     }
 
-    // Check if the post comment is already disliked by the user
     const comment = await Comment.findOne({ _id: commentID });
 
+    // Only remove dislike if the post comment is already disliked by the user
     if (comment.dislikes.includes(user)) {
-      return res.status(400).json("You've already disliked this comment!");
+      const index = comment.dislikes.indexOf(user);
+      comment.dislikes.splice(index, 1);
+      await comment.save();
+
+      return res.json('Comment undisliked successfully!');
     }
 
-    // Remove like from the post comment if it exists
+    // Otherwise remove like from the post comment if it exists and push dislike to the post comment
     const index = comment.likes.indexOf(user);
-
     if (index !== -1) {
       comment.likes.splice(index, 1);
     }
-
-    // Push dislike to the post comment
     comment.dislikes.push(user);
     await comment.save();
 
