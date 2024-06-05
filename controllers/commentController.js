@@ -104,6 +104,13 @@ export const likeComment = [
       return res.status(400).json("You've already liked this comment!");
     }
 
+    // Remove dislike from the post comment if it exists
+    const index = comment.dislikes.indexOf(user);
+
+    if (index !== -1) {
+      comment.dislikes.splice(index, 1);
+    }
+
     // Push new like to the post comment
     comment.likes.push(user);
     await comment.save();
@@ -112,9 +119,9 @@ export const likeComment = [
   }),
 ];
 
-// @desc    Unlike post comment
-// @route   PUT /posts/:slug/comments/:commentID/unlike
-export const unlikeComment = [
+// @desc    Dislike post comment
+// @route   PUT /posts/:slug/comments/:commentID/dislike
+export const dislikeComment = [
   body('user')
     .trim()
     .isMongoId()
@@ -138,26 +145,27 @@ export const unlikeComment = [
     if (!userExists) {
       return res
         .status(400)
-        .json('Error while unliking a post comment. Please try again');
+        .json('Error while disliking a post comment. Please try again');
     }
 
-    // Make sure the post comment is already liked by the user
-    const { likes: currentCommentLikes } = await Comment.findOne(
-      { _id: commentID },
-      'likes -_id'
-    );
+    // Check if the post comment is already disliked by the user
+    const comment = await Comment.findOne({ _id: commentID });
 
-    if (!currentCommentLikes.includes(user)) {
-      return res.status(400).json('Like the comment first to unlike it!');
+    if (comment.dislikes.includes(user)) {
+      return res.status(400).json("You've already disliked this comment!");
     }
 
-    // Remove like from the post comment
-    const updatedComment = await Comment.findOneAndUpdate(
-      { _id: commentID },
-      { $pull: { likes: user } },
-      { new: true }
-    );
+    // Remove like from the post comment if it exists
+    const index = comment.likes.indexOf(user);
 
-    return res.json('Comment unliked successfully!');
+    if (index !== -1) {
+      comment.likes.splice(index, 1);
+    }
+
+    // Push dislike to the post comment
+    comment.dislikes.push(user);
+    await comment.save();
+
+    return res.json('Comment disliked successfully!');
   }),
 ];

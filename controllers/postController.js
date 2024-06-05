@@ -31,7 +31,7 @@ export const getAllPosts = [
 
     const allPosts = await Post.find({})
       .populate({ path: 'author', select: 'username' })
-      .populate({ path: 'category', select: 'name' })
+      .populate({ path: 'category', select: 'name slug' })
       .sort({ created_at: -1 })
       .limit(limit ?? limit)
       .exec();
@@ -98,6 +98,7 @@ export const createPost = [
       category,
       created_at: Date.now(),
       likes: [author],
+      dislikes: [],
       comments: [],
       slug: slugify(title + uniqueString, { lower: true }),
     }).save();
@@ -115,7 +116,6 @@ export const getSinglePost = asyncHandler(async (req, res, next) => {
   const post = await Post.findOne({ slug })
     .populate({ path: 'author', select: 'username' })
     .populate({ path: 'category', select: 'name' })
-    .populate({ path: 'likes', select: 'username' })
     .populate({
       path: 'comments',
       populate: { path: 'author', select: 'username' },
@@ -165,6 +165,13 @@ export const likePost = [
       return res.status(400).json("You've already liked this post!");
     }
 
+    // Remove dislike from the post if it exists
+    const index = post.dislikes.indexOf(user);
+
+    if (index !== -1) {
+      post.dislikes.splice(index, 1);
+    }
+
     // Push new like to the post
     post.likes.push(user);
     await post.save();
@@ -173,9 +180,9 @@ export const likePost = [
   }),
 ];
 
-// @desc    Unlike post
-// @route   PUT /posts/:slug/unlike
-export const unlikePost = [
+// @desc    Dislike post
+// @route   PUT /posts/:slug/dislike
+export const dislikePost = [
   body('user')
     .trim()
     .isMongoId()
@@ -199,26 +206,27 @@ export const unlikePost = [
     if (!userExists) {
       return res
         .status(400)
-        .json('Error while unliking a post. Please try again');
+        .json('Error while disliking a post. Please try again');
     }
 
-    // Make sure the post is already liked by the user
-    const { likes: currentPostLikes } = await Post.findOne(
-      { slug },
-      'likes -_id'
-    );
+    // Check if the post is already disliked by the user
+    const post = await Post.findOne({ slug });
 
-    if (!currentPostLikes.includes(user)) {
-      return res.status(400).json('Like the post first to unlike it!');
+    if (post.dislikes.includes(user)) {
+      return res.status(400).json("You've already disliked this post!");
     }
 
-    // Remove like from the post
-    const updatedPost = await Post.findOneAndUpdate(
-      { slug },
-      { $pull: { likes: user } },
-      { new: true }
-    );
+    // Remove like from the post if it exists
+    const index = post.likes.indexOf(user);
 
-    return res.json('Post unliked successfully!');
+    if (index !== -1) {
+      post.likes.splice(index, 1);
+    }
+
+    // Push dislike to the post
+    post.dislikes.push(user);
+    await post.save();
+
+    return res.json('Post disliked successfully!');
   }),
 ];

@@ -3,7 +3,7 @@ import { Router } from 'express';
 import {
   createComment,
   likeComment,
-  unlikeComment,
+  dislikeComment,
 } from '../controllers/commentController.js';
 import { checkAuth } from '../config/middleware.js';
 
@@ -16,6 +16,6 @@ router.post('/', createComment);
 
 router.put('/:commentID/like', likeComment);
 
-router.put('/:commentID/unlike', unlikeComment);
+router.put('/:commentID/dislike', dislikeComment);
 
 export default router;

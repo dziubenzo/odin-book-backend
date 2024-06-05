@@ -34,6 +34,12 @@ const PostSchema = new Schema({
       ref: 'User',
     },
   ],
+  dislikes: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
   comments: [
     {
       type: Schema.Types.ObjectId,

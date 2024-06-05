@@ -24,6 +24,12 @@ const CommentSchema = new Schema({
       ref: 'User',
     },
   ],
+  dislikes: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
 });
 
 export default mongoose.model('Comment', CommentSchema);
