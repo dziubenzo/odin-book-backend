@@ -202,7 +202,7 @@ describe('PUT /posts/:slug/comments/:commentID/like', () => {
   });
 });
 
-describe('PUT /posts/:slug/comments/:commentID/unlike', () => {
+describe('PUT /posts/:slug/comments/:commentID/dislike', () => {
   let token = '';
 
   beforeAll(async () => {
@@ -218,7 +218,7 @@ describe('PUT /posts/:slug/comments/:commentID/unlike', () => {
   describe('no auth', () => {
     it('should return a 401', (done) => {
       request(app)
-        .put(`/posts/${post1.slug}/comments/${idComment2}/unlike`)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .type('form')
         .send({ user: user1._id })
         .expect(401, done);
@@ -228,7 +228,7 @@ describe('PUT /posts/:slug/comments/:commentID/unlike', () => {
   describe('invalid user', () => {
     it('should return a 400 and an error message if the user is not a valid MongoDB ID', (done) => {
       request(app)
-        .put(`/posts/${post1.slug}/comments/${idComment2}/unlike`)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: 'CoolUser' })
@@ -240,7 +240,7 @@ describe('PUT /posts/:slug/comments/:commentID/unlike', () => {
       const validMongoID = new mongoose.Types.ObjectId().toString();
 
       request(app)
-        .put(`/posts/${post1.slug}/comments/${idComment2}/unlike`)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: validMongoID })
@@ -252,21 +252,21 @@ describe('PUT /posts/:slug/comments/:commentID/unlike', () => {
   describe('valid user', () => {
     it('should return a 200 and a success message', (done) => {
       request(app)
-        .put(`/posts/${post1.slug}/comments/${idComment2}/unlike`)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: user1._id.toString() })
-        .expect(/unliked successfully/i)
+        .expect(/disliked successfully/i)
         .expect(200, done);
     });
 
     it('should return a 400 and an error message if the user has not liked the comment', (done) => {
       request(app)
-        .put(`/posts/${post1.slug}/comments/${idComment2}/unlike`)
+        .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: user1._id.toString() })
-        .expect(/like the comment first/i)
+        .expect(/already disliked/i)
         .expect(400, done);
     });
   });
