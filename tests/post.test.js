@@ -349,14 +349,25 @@ describe('PUT /posts/:slug/like', () => {
         .expect(200, done);
     });
 
-    it('should return a 400 and an error message if the user has already liked the post', (done) => {
+    it('should return a 200 and a success message if the user has already liked the post', (done) => {
       request(app)
         .put(`/posts/${post1.slug}/like`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: user1._id.toString() })
-        .expect(/already liked/i)
-        .expect(400, done);
+        .expect(/unliked successfully/i)
+        .expect(200, done);
+    });
+
+    it('should remove a like from the likes array', (done) => {
+      request(app)
+        .get(`/posts/${post1.slug}`)
+        .auth(token, { type: 'bearer' })
+        .expect('Content-Type', /json/)
+        .expect((res) => {
+          expect(res.body.likes).not.toContain(user1._id.toString());
+        })
+        .expect(200, done);
     });
   });
 });
@@ -431,14 +442,25 @@ describe('PUT /posts/:slug/dislike', () => {
         .expect(200, done);
     });
 
-    it('should return a 400 and an error message if the user has not liked the post', (done) => {
+    it('should return a 200 and a success message if the user has already disliked the post', (done) => {
       request(app)
         .put(`/posts/${post1.slug}/dislike`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: user1._id.toString() })
-        .expect(/already disliked/i)
-        .expect(400, done);
+        .expect(/undisliked successfully/i)
+        .expect(200, done);
+    });
+
+    it('should remove a dislike from the dislikes array', (done) => {
+      request(app)
+        .get(`/posts/${post1.slug}`)
+        .auth(token, { type: 'bearer' })
+        .expect('Content-Type', /json/)
+        .expect((res) => {
+          expect(res.body.dislikes).not.toContain(user1._id.toString());
+        })
+        .expect(200, done);
     });
   });
 });
