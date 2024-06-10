@@ -60,6 +60,8 @@ export const createComment = [
       .populate({
         path: 'comments',
         populate: { path: 'author', select: 'username' },
+        // Sort comments in descending order (newest first)
+        options: { sort: { created_at: -1 } },
       })
       .exec();
 
