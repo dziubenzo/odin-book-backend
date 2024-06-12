@@ -10,6 +10,8 @@ import {
   checkAuth,
 } from '../config/middleware.js';
 import { getFirstErrorMsg } from '../config/helpers.js';
+import { upload } from '../config/multer.js';
+import { handleAvatarUpload } from '../config/cloudinary.js';
 
 import jwt from 'jsonwebtoken';
 
@@ -143,5 +145,54 @@ export const authUser = [
   checkAuth,
   asyncHandler(async (req, res, next) => {
     return res.json(req.user);
+  }),
+];
+
+// @desc    Update user (bio and/or avatar)
+// @route   PUT /users/:username/
+export const updateUser = [
+  checkAuth,
+  upload.single('uploaded_avatar'),
+  body('bio')
+    .trim()
+    .optional()
+    .isLength({ max: 160 })
+    .withMessage('Bio cannot exceed 160 characters'),
+  body('avatar').optional().isURL().withMessage('Avatar must be an URL'),
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Return the first validation error message if there are any errors
+      const firstErrorMsg = getFirstErrorMsg(errors);
+      return res.status(400).json(firstErrorMsg);
+    }
+
+    const username = req.params.username;
+    const bio = req.body.bio || req.user.bio;
+
+    // Transform and upload avatar to Cloudinary if image sent with request
+    if (req.file) {
+      const [cloudinaryRes, user] = await Promise.all([
+        handleAvatarUpload(req.file),
+        User.findOne({ username }).exec(),
+      ]);
+
+      user.bio = bio;
+      user.avatar = cloudinaryRes.secure_url;
+      await user.save();
+
+      return res.json(user);
+    }
+
+    const defaultAvatarURL = req.body.avatar || req.user.avatar;
+    const user = await User.findOne({ username }).exec();
+
+    user.bio = bio;
+    user.avatar = defaultAvatarURL;
+    await user.save();
+
+    return res.json(user);
   }),
 ];
