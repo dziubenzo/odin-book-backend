@@ -15,7 +15,7 @@ import {
   category3,
   longDescription,
 } from './mocks.js';
-import { defaultIcon } from '../config/helpers.js';
+import { defaultCategoryIcon } from '../config/helpers.js';
 
 import passport from 'passport';
 import { jwtStrategy } from '../config/passport.js';
@@ -108,7 +108,7 @@ describe('POST /categories', () => {
         .expect((res) => {
           expect(res.body[res.body.length - 1]).toHaveProperty(
             'icon',
-            defaultIcon
+            defaultCategoryIcon
           );
         })
         .expect(200, done);

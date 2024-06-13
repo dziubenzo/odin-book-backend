@@ -2,7 +2,7 @@ import Category from '../models/Category.js';
 
 import asyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
-import { getFirstErrorMsg, defaultIcon } from '../config/helpers.js';
+import { getFirstErrorMsg, defaultCategoryIcon } from '../config/helpers.js';
 import {
   checkPattern,
   checkCategoryNameAvailability,
@@ -48,7 +48,7 @@ export const createCategory = [
     }
 
     const name = req.body.name;
-    const icon = req.body.icon || defaultIcon;
+    const icon = req.body.icon || defaultCategoryIcon;
     const description = req.body.description;
 
     // Create new category

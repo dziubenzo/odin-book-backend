@@ -118,7 +118,7 @@ export const getSinglePost = asyncHandler(async (req, res, next) => {
     .populate({ path: 'category', select: 'name' })
     .populate({
       path: 'comments',
-      populate: { path: 'author', select: 'username' },
+      populate: { path: 'author', select: 'username avatar' },
       // Sort comments in descending order (newest first)
       options: { sort: { created_at: -1 } },
     })

@@ -9,7 +9,7 @@ import {
   checkUsernameAvailability,
   checkAuth,
 } from '../config/middleware.js';
-import { getFirstErrorMsg } from '../config/helpers.js';
+import { getFirstErrorMsg, getRandomAvatar } from '../config/helpers.js';
 import { upload } from '../config/multer.js';
 import { handleAvatarUpload } from '../config/cloudinary.js';
 
@@ -73,12 +73,12 @@ export const createUser = [
         .json('Something went wrong while creating a user. Please try again.');
     }
 
-    // Create new user
+    // Create new user with a random default avatar
     await new User({
       username,
       password: hashedPassword,
       registered_at: Date.now(),
-      avatar: '',
+      avatar: getRandomAvatar(),
       bio: '',
       followed_users: [],
       followed_categories: [],
