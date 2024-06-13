@@ -15,6 +15,7 @@ import { startMongoMemoryServer } from '../config/mongoDBTesting.js';
 
 import passport from 'passport';
 import { jwtStrategy } from '../config/passport.js';
+import { defaultAvatars } from '../config/helpers.js';
 
 const app = express();
 passport.use(jwtStrategy);
@@ -70,6 +71,22 @@ describe('POST /users', () => {
         .send(validCredentials)
         .expect(/successfully/i)
         .expect(200, done);
+    });
+
+    it('should assign a random default avatar', async () => {
+      const { body: token } = await request(app)
+        .post('/users/login')
+        .type('form')
+        .send({
+          username: validCredentials.username,
+          password: validCredentials.password,
+        });
+
+      const { body: user } = await request(app)
+        .post('/users/auth')
+        .auth(token, { type: 'bearer' });
+
+      expect(defaultAvatars).toContain(user.avatar);
     });
   });
 
