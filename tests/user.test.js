@@ -27,8 +27,8 @@ app.use('/users', userRouter);
 
 describe('GET /users', () => {
   describe('no auth', () => {
-    it('should return a 401', (done) => {
-      request(app).get('/users').expect(401, done);
+    it('should return a 401', async () => {
+      await request(app).get('/users').expect(401);
     });
   });
 
@@ -48,8 +48,8 @@ describe('GET /users', () => {
       token = response.body;
     });
 
-    it('should return a 200 and an array of user objects', (done) => {
-      request(app)
+    it('should return a 200 and an array of user objects', async () => {
+      await request(app)
         .get('/users')
         .auth(token, { type: 'bearer' })
         .expect('Content-Type', /json/)
@@ -58,20 +58,20 @@ describe('GET /users', () => {
           expect(res.body[0]).toHaveProperty('username', 'user1');
           expect(res.body[1]).toHaveProperty('username', 'user2');
         })
-        .expect(200, done);
+        .expect(200);
     });
   });
 });
 
 describe('POST /users', () => {
   describe('valid user credentials', () => {
-    it('should return a 200 and a success message', (done) => {
-      request(app)
+    it('should return a 200 and a success message', async () => {
+      await request(app)
         .post('/users')
         .type('form')
         .send(validCredentials)
         .expect(/successfully/i)
-        .expect(200, done);
+        .expect(200);
     });
 
     it('should assign a random default avatar', async () => {
@@ -94,44 +94,44 @@ describe('POST /users', () => {
   });
 
   describe('invalid user credentials', () => {
-    it('should return a 400 and an error message if the username is too short', (done) => {
-      request(app)
+    it('should return a 400 and an error message if the username is too short', async () => {
+      await request(app)
         .post('/users')
         .type('form')
         .send({ ...validCredentials, username: 'bz' })
         .expect(/username must contain between/i)
-        .expect(400, done);
+        .expect(400);
     });
 
-    it('should return a 400 and an error message if the username is too long', (done) => {
-      request(app)
+    it('should return a 400 and an error message if the username is too long', async () => {
+      await request(app)
         .post('/users')
         .type('form')
         .send({ ...validCredentials, username: 'averyverylongusername' })
         .expect(/username must contain between/i)
-        .expect(400, done);
+        .expect(400);
     });
 
-    it('should return a 400 and an error message if the username does not match the pattern', (done) => {
-      request(app)
+    it('should return a 400 and an error message if the username does not match the pattern', async () => {
+      await request(app)
         .post('/users')
         .type('form')
         .send({ ...validCredentials, username: '99badusername' })
         .expect(/start with a letter/i)
-        .expect(400, done);
+        .expect(400);
     });
 
-    it('should return a 400 and an error message if the username is already taken', (done) => {
-      request(app)
+    it('should return a 400 and an error message if the username is already taken', async () => {
+      await request(app)
         .post('/users')
         .type('form')
         .send(validCredentials)
         .expect(/already taken/i)
-        .expect(400, done);
+        .expect(400);
     });
 
-    it('should return a 400 and an error message if the password is too short', (done) => {
-      request(app)
+    it('should return a 400 and an error message if the password is too short', async () => {
+      await request(app)
         .post('/users')
         .type('form')
         .send({
@@ -140,11 +140,11 @@ describe('POST /users', () => {
           confirm_password: 'bz',
         })
         .expect(/password must contain between/i)
-        .expect(400, done);
+        .expect(400);
     });
 
-    it('should return a 400 and an error message if the password is too long', (done) => {
-      request(app)
+    it('should return a 400 and an error message if the password is too long', async () => {
+      await request(app)
         .post('/users')
         .type('form')
         .send({
@@ -153,11 +153,11 @@ describe('POST /users', () => {
           confirm_password: 'averyverylongpassword',
         })
         .expect(/password must contain between/i)
-        .expect(400, done);
+        .expect(400);
     });
 
-    it('should return a 400 and an error message if the passwords provided do not match', (done) => {
-      request(app)
+    it('should return a 400 and an error message if the passwords provided do not match', async () => {
+      await request(app)
         .post('/users')
         .type('form')
         .send({
@@ -166,15 +166,15 @@ describe('POST /users', () => {
           confirm_password: 'password2',
         })
         .expect(/do not match/i)
-        .expect(400, done);
+        .expect(400);
     });
   });
 });
 
 describe('POST /users/login', () => {
   describe('valid user credentials', () => {
-    it('should return a 200 and a string resembling a token', (done) => {
-      request(app)
+    it('should return a 200 and a string resembling a token', async () => {
+      await request(app)
         .post('/users/login')
         .type('form')
         .send({ username: user1.username, password: passwordUser1 })
@@ -182,39 +182,39 @@ describe('POST /users/login', () => {
           expect(res.body.length).toBeGreaterThan(100);
           expect(res.body.length).toBeLessThan(200);
         })
-        .expect(200, done);
+        .expect(200);
     });
   });
 
   describe('invalid user credentials', () => {
-    it('should return a 401 and an error message if the username is incorrect', (done) => {
-      request(app)
+    it('should return a 401 and an error message if the username is incorrect', async () => {
+      await request(app)
         .post('/users/login')
         .type('form')
         .send({ username: user2.username, password: passwordUser1 })
         .expect(/invalid username/i)
-        .expect(401, done);
+        .expect(401);
     });
 
-    it('should return a 401 and an error message if the password is incorrect', (done) => {
-      request(app)
+    it('should return a 401 and an error message if the password is incorrect', async () => {
+      await request(app)
         .post('/users/login')
         .type('form')
         .send({ username: user1.username, password: passwordUser2 })
         .expect(/invalid username/i)
-        .expect(401, done);
+        .expect(401);
     });
   });
 });
 
 describe('POST /users/auth', () => {
   describe('no auth', () => {
-    it('should return a 401', (done) => {
-      request(app)
+    it('should return a 401', async () => {
+      await request(app)
         .post('/users/auth')
         .type('form')
         .send({ username: user1.username, password: passwordUser1 })
-        .expect(401, done);
+        .expect(401);
     });
   });
 
@@ -231,8 +231,8 @@ describe('POST /users/auth', () => {
       token = response.body;
     });
 
-    it('should return a 200 and a logged in user object without the password', (done) => {
-      request(app)
+    it('should return a 200 and a logged in user object without the password', async () => {
+      await request(app)
         .post('/users/auth')
         .auth(token, { type: 'bearer' })
         .expect((res) => {
@@ -242,19 +242,19 @@ describe('POST /users/auth', () => {
           expect(res.body).toHaveProperty('avatar');
           expect(res.body).not.toHaveProperty('password');
         })
-        .expect(200, done);
+        .expect(200);
     });
   });
 });
 
 describe('PUT /users/:username/update', () => {
   describe('no auth', () => {
-    it('should return a 401', (done) => {
-      request(app)
+    it('should return a 401', async () => {
+      await request(app)
         .put(`/users/${user1.username}/update`)
         .type('form')
         .send({ bio: 'My super bio, yo!', avatar: 'https://example.com' })
-        .expect(401, done);
+        .expect(401);
     });
   });
 
@@ -279,8 +279,8 @@ describe('PUT /users/:username/update', () => {
       token = response.body;
     });
 
-    it('should return a 200 and an updated user with changed bio and avatar', (done) => {
-      request(app)
+    it('should return a 200 and an updated user with changed bio and avatar', async () => {
+      await request(app)
         .put(`/users/${user1.username}/update`)
         .auth(token, { type: 'bearer' })
         .type('form')
@@ -289,11 +289,11 @@ describe('PUT /users/:username/update', () => {
           expect(res.body.bio).toBe('My super bio, yo!');
           expect(res.body.avatar).toBe('https://example.com');
         })
-        .expect(200, done);
+        .expect(200);
     });
 
     it('should return a 200 and an updated user with their avatar changed to the uploaded image', async () => {
-      const response = await request(app)
+      await request(app)
         .put(`/users/${user1.username}/update`)
         .auth(token, { type: 'bearer' })
         .attach('uploaded_avatar', file, 'cool_cat_image.png')
@@ -304,7 +304,7 @@ describe('PUT /users/:username/update', () => {
     });
 
     it('should return a 200 and set the avatar to the uploaded image if the default avatar is also provided', async () => {
-      const response = await request(app)
+      await request(app)
         .put(`/users/${user1.username}/update`)
         .auth(token, { type: 'bearer' })
         .field('avatar', 'https://example.com')
@@ -316,7 +316,7 @@ describe('PUT /users/:username/update', () => {
     });
 
     it('should return a 400 and an error message if the bio exceeds the maximum number of characters', async () => {
-      const response = await request(app)
+      await request(app)
         .put(`/users/${user1.username}/update`)
         .auth(token, { type: 'bearer' })
         .field('bio', longBio)

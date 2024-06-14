@@ -14,8 +14,4 @@ export async function startMongoMemoryServer() {
     }
     console.log(e);
   });
-
-  mongoose.connection.once('open', () => {
-    console.log(`MongoDB successfully connected to ${mongoUri}`);
-  });
 }

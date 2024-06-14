@@ -35,12 +35,12 @@ app.use('/posts/:slug/comments', commentRouter);
 
 describe('POST /posts/:slug/comments', () => {
   describe('no auth', () => {
-    it('should return a 401', (done) => {
-      request(app)
+    it('should return a 401', async () => {
+      await request(app)
         .post(`/posts/${post1.slug}/comments`)
         .type('form')
         .send({ author: user1._id.toString(), content: 'Comment!' })
-        .expect(401, done);
+        .expect(401);
     });
   });
 
@@ -62,8 +62,8 @@ describe('POST /posts/:slug/comments', () => {
     });
 
     describe('valid comment', () => {
-      it('should return a 200 and the updated post that includes the new comment', (done) => {
-        request(app)
+      it('should return a 200 and the updated post that includes the new comment', async () => {
+        await request(app)
           .post(`/posts/${post1.slug}/comments`)
           .auth(token, { type: 'bearer' })
           .type('form')
@@ -77,13 +77,13 @@ describe('POST /posts/:slug/comments', () => {
             );
             expect(res.body.comments[0]).toHaveProperty('content', 'Comment 1');
           })
-          .expect(200, done);
+          .expect(200);
       });
     });
 
-    describe('invalid comment', () => {
-      it('should return a 400 and an error message if the author is not a valid MongoDB ID', (done) => {
-        request(app)
+    describe('invalid comment', async () => {
+      it('should return a 400 and an error message if the author is not a valid MongoDB ID', async () => {
+        await request(app)
           .post(`/posts/${post1.slug}/comments`)
           .auth(token, { type: 'bearer' })
           .type('form')
@@ -92,39 +92,39 @@ describe('POST /posts/:slug/comments', () => {
             content: 'Good comment for a change',
           })
           .expect(/author field must be/i)
-          .expect(400, done);
+          .expect(400);
       });
 
-      it('should return a 400 and an error message if the content is too short', (done) => {
-        request(app)
+      it('should return a 400 and an error message if the content is too short', async () => {
+        await request(app)
           .post(`/posts/${post1.slug}/comments`)
           .auth(token, { type: 'bearer' })
           .type('form')
           .send({ author: user1._id.toString(), content: 'Bz' })
           .expect(/comment content must contain/i)
-          .expect(400, done);
+          .expect(400);
       });
 
-      it('should return a 400 and an error message if the content is too long', (done) => {
-        request(app)
+      it('should return a 400 and an error message if the content is too long', async () => {
+        await request(app)
           .post(`/posts/${post1.slug}/comments`)
           .auth(token, { type: 'bearer' })
           .type('form')
           .send({ author: user1._id.toString(), content: longDescription })
           .expect(/comment content must contain/i)
-          .expect(400, done);
+          .expect(400);
       });
 
-      it('should return a 400 and an error message if the author does not exist in the DB', (done) => {
+      it('should return a 400 and an error message if the author does not exist in the DB', async () => {
         const validMongoID = new mongoose.Types.ObjectId().toString();
 
-        request(app)
+        await request(app)
           .post(`/posts/${post1.slug}/comments`)
           .auth(token, { type: 'bearer' })
           .type('form')
           .send({ author: validMongoID, content: 'Happy comment!' })
           .expect(/error while/i)
-          .expect(400, done);
+          .expect(400);
       });
     });
   });
@@ -146,58 +146,58 @@ describe('PUT /posts/:slug/comments/:commentID/like', () => {
   });
 
   describe('no auth', () => {
-    it('should return a 401', (done) => {
-      request(app)
+    it('should return a 401', async () => {
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
         .type('form')
         .send({ user: user1._id })
-        .expect(401, done);
+        .expect(401);
     });
   });
 
   describe('invalid user', () => {
-    it('should return a 400 and an error message if the user is not a valid MongoDB ID', (done) => {
-      request(app)
+    it('should return a 400 and an error message if the user is not a valid MongoDB ID', async () => {
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: 'SuperUser' })
         .expect(/user field must be/i)
-        .expect(400, done);
+        .expect(400);
     });
 
-    it('should return a 400 and an error message if the user is not in the DB', (done) => {
+    it('should return a 400 and an error message if the user is not in the DB', async () => {
       const validMongoID = new mongoose.Types.ObjectId().toString();
 
-      request(app)
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: validMongoID })
         .expect(/error while/i)
-        .expect(400, done);
+        .expect(400);
     });
   });
 
   describe('valid user', () => {
-    it('should return a 200 and a success message', (done) => {
-      request(app)
+    it('should return a 200 and a success message', async () => {
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: user1._id.toString() })
         .expect(/liked successfully/i)
-        .expect(200, done);
+        .expect(200);
     });
 
-    it('should return a 200 and a success message if the user has already liked the comment', (done) => {
-      request(app)
+    it('should return a 200 and a success message if the user has already liked the comment', async () => {
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/like`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: user1._id.toString() })
         .expect(/unliked successfully/i)
-        .expect(200, done);
+        .expect(200);
     });
   });
 });
@@ -216,58 +216,58 @@ describe('PUT /posts/:slug/comments/:commentID/dislike', () => {
   });
 
   describe('no auth', () => {
-    it('should return a 401', (done) => {
-      request(app)
+    it('should return a 401', async () => {
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .type('form')
         .send({ user: user1._id })
-        .expect(401, done);
+        .expect(401);
     });
   });
 
-  describe('invalid user', () => {
-    it('should return a 400 and an error message if the user is not a valid MongoDB ID', (done) => {
-      request(app)
+  describe('invalid user', async () => {
+    it('should return a 400 and an error message if the user is not a valid MongoDB ID', async () => {
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: 'CoolUser' })
         .expect(/user field must be/i)
-        .expect(400, done);
+        .expect(400);
     });
 
-    it('should return a 400 and an error message if the user is not in the DB', (done) => {
+    it('should return a 400 and an error message if the user is not in the DB', async () => {
       const validMongoID = new mongoose.Types.ObjectId().toString();
 
-      request(app)
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: validMongoID })
         .expect(/error while/i)
-        .expect(400, done);
+        .expect(400);
     });
   });
 
   describe('valid user', () => {
-    it('should return a 200 and a success message', (done) => {
-      request(app)
+    it('should return a 200 and a success message', async () => {
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: user1._id.toString() })
         .expect(/disliked successfully/i)
-        .expect(200, done);
+        .expect(200);
     });
 
-    it('should return a 200 and a success message if the user has already disliked the comment', (done) => {
-      request(app)
+    it('should return a 200 and a success message if the user has already disliked the comment', async () => {
+      await request(app)
         .put(`/posts/${post1.slug}/comments/${idComment2}/dislike`)
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ user: user1._id.toString() })
         .expect(/undisliked successfully/i)
-        .expect(200, done);
+        .expect(200);
     });
   });
 });

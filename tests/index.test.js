@@ -8,10 +8,10 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use('/', indexRouter);
 
-test('GET / works', (done) => {
-  request(app)
+test('GET / works', async () => {
+  await request(app)
     .get('/')
     .expect('Content-Type', /json/)
     .expect({ project: 'Odin-Book', author: 'dziubenzo' })
-    .expect(200, done);
+    .expect(200);
 });
