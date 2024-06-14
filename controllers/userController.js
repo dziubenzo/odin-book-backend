@@ -149,7 +149,7 @@ export const authUser = [
 ];
 
 // @desc    Update user (bio and/or avatar)
-// @route   PUT /users/:username/
+// @route   PUT /users/:username/update
 export const updateUser = [
   checkAuth,
   upload.single('uploaded_avatar'),

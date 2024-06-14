@@ -115,7 +115,7 @@ export const getSinglePost = asyncHandler(async (req, res, next) => {
 
   const post = await Post.findOne({ slug })
     .populate({ path: 'author', select: 'username' })
-    .populate({ path: 'category', select: 'name' })
+    .populate({ path: 'category', select: 'name slug' })
     .populate({
       path: 'comments',
       populate: { path: 'author', select: 'username avatar' },

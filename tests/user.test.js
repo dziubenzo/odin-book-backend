@@ -10,6 +10,7 @@ import {
   user2,
   passwordUser2,
   validCredentials,
+  longBio,
 } from './mocks.js';
 import { startMongoMemoryServer } from '../config/mongoDBTesting.js';
 
@@ -74,6 +75,8 @@ describe('POST /users', () => {
     });
 
     it('should assign a random default avatar', async () => {
+      await request(app).post('/users').type('form').send(validCredentials);
+
       const { body: token } = await request(app)
         .post('/users/login')
         .type('form')
@@ -240,6 +243,85 @@ describe('POST /users/auth', () => {
           expect(res.body).not.toHaveProperty('password');
         })
         .expect(200, done);
+    });
+  });
+});
+
+describe('PUT /users/:username/update', () => {
+  describe('no auth', () => {
+    it('should return a 401', (done) => {
+      request(app)
+        .put(`/users/${user1.username}/update`)
+        .type('form')
+        .send({ bio: 'My super bio, yo!', avatar: 'https://example.com' })
+        .expect(401, done);
+    });
+  });
+
+  describe('auth', () => {
+    let token = '';
+    const file = Buffer.from('A legit file');
+
+    beforeAll(async () => {
+      vi.mock('../config/cloudinary.js', () => {
+        return {
+          handleAvatarUpload: vi
+            .fn()
+            .mockResolvedValue({ secure_url: 'cool_cat_image.png' }),
+        };
+      });
+      const response = await request(app)
+        .post('/users/login')
+        .type('form')
+        .send({ username: user1.username, password: passwordUser1 })
+        .expect(200);
+
+      token = response.body;
+    });
+
+    it('should return a 200 and an updated user with changed bio and avatar', (done) => {
+      request(app)
+        .put(`/users/${user1.username}/update`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ bio: 'My super bio, yo!', avatar: 'https://example.com' })
+        .expect((res) => {
+          expect(res.body.bio).toBe('My super bio, yo!');
+          expect(res.body.avatar).toBe('https://example.com');
+        })
+        .expect(200, done);
+    });
+
+    it('should return a 200 and an updated user with their avatar changed to the uploaded image', async () => {
+      const response = await request(app)
+        .put(`/users/${user1.username}/update`)
+        .auth(token, { type: 'bearer' })
+        .attach('uploaded_avatar', file, 'cool_cat_image.png')
+        .expect((res) => {
+          expect(res.body.avatar).toBe('cool_cat_image.png');
+        })
+        .expect(200);
+    });
+
+    it('should return a 200 and set the avatar to the uploaded image if the default avatar is also provided', async () => {
+      const response = await request(app)
+        .put(`/users/${user1.username}/update`)
+        .auth(token, { type: 'bearer' })
+        .field('avatar', 'https://example.com')
+        .attach('uploaded_avatar', file, 'cool_cat_image.png')
+        .expect((res) => {
+          expect(res.body.avatar).toBe('cool_cat_image.png');
+        })
+        .expect(200);
+    });
+
+    it('should return a 400 and an error message if the bio exceeds the maximum number of characters', async () => {
+      const response = await request(app)
+        .put(`/users/${user1.username}/update`)
+        .auth(token, { type: 'bearer' })
+        .field('bio', longBio)
+        .expect(/bio cannot exceed/i)
+        .expect(400);
     });
   });
 });

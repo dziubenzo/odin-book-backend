@@ -17,7 +17,7 @@ export const user1 = {
   password: await bcrypt.hash(passwordUser1, 10),
   registered_at: Date.now(),
   avatar: '',
-  bio: '',
+  bio: 'Default Bio',
   followed_users: [],
   followed_categories: [],
   __v: 0,
@@ -34,6 +34,9 @@ export const validCredentials = {
   password: 'password',
   confirm_password: 'password',
 };
+
+export const longBio =
+  'Lorem ipsum dolor sit amet. Non numquam deserunt cum deserunt voluptatem sit iure eaque eos consectetur voluptatem aut similique corrupti et libero quos sed corrupti maxime.';
 
 /* 
 Categories
