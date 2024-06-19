@@ -176,7 +176,7 @@ export const updateUser = [
     if (req.file) {
       const [cloudinaryRes, user] = await Promise.all([
         handleAvatarUpload(req.file),
-        User.findOne({ username }).exec(),
+        User.findOne({ username }, '-password').exec(),
       ]);
 
       user.bio = bio;
@@ -187,7 +187,7 @@ export const updateUser = [
     }
 
     const defaultAvatarURL = req.body.avatar || req.user.avatar;
-    const user = await User.findOne({ username }).exec();
+    const user = await User.findOne({ username }, '-password').exec();
 
     user.bio = bio;
     user.avatar = defaultAvatarURL;
