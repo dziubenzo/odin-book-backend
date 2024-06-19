@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Category from '../models/Category.js';
 
 import asyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
@@ -194,5 +195,54 @@ export const updateUser = [
     await user.save();
 
     return res.json(user);
+  }),
+];
+
+// @desc    Follow/unfollow category
+// @route   PUT /users/:username/update_category
+export const updateUserCategories = [
+  checkAuth,
+  body('category_id')
+    .trim()
+    .isMongoId()
+    .withMessage('Category must be a valid MongoDB ID'),
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Return the first validation error message if there are any errors
+      const firstErrorMsg = getFirstErrorMsg(errors);
+      return res.status(400).json(firstErrorMsg);
+    }
+
+    const categoryID = req.body.category_id;
+    const username = req.params.username;
+
+    // Make sure the category exists and retrieve user
+    const [categoryExists, user] = await Promise.all([
+      Category.findById(categoryID).exec(),
+      User.findOne({ username }).exec(),
+    ]);
+
+    if (!categoryExists) {
+      return res
+        .status(400)
+        .json('Error while following/unfollowing a category. Please try again');
+    }
+
+    // Follow or unfollow the category
+    if (user.followed_categories.includes(categoryID)) {
+      const index = user.followed_categories.indexOf(categoryID);
+      user.followed_categories.splice(index, 1);
+      await user.save();
+
+      return res.json('Category unfollowed successfully!');
+    }
+
+    user.followed_categories.push(categoryID);
+    await user.save();
+
+    return res.json('Category followed successfully!');
   }),
 ];
