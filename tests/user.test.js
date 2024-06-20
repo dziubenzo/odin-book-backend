@@ -1,5 +1,6 @@
 import userRouter from '../routes/user.js';
 import User from '../models/User.js';
+import Category from '../models/Category.js';
 
 import request from 'supertest';
 import express from 'express';
@@ -11,6 +12,8 @@ import {
   passwordUser2,
   validCredentials,
   longBio,
+  category1,
+  category2,
 } from './mocks.js';
 import { startMongoMemoryServer } from '../config/mongoDBTesting.js';
 
@@ -321,6 +324,94 @@ describe('PUT /users/:username/update', () => {
         .auth(token, { type: 'bearer' })
         .field('bio', longBio)
         .expect(/bio cannot exceed/i)
+        .expect(400);
+    });
+  });
+});
+
+describe('PUT /users/:username/update_category', () => {
+  describe('no auth', () => {
+    it('should return a 401', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_category`)
+        .type('form')
+        .send({ category_id: category1._id })
+        .expect(401);
+    });
+  });
+
+  describe('auth', () => {
+    let token = '';
+
+    beforeAll(async () => {
+      await new Category(category1).save();
+
+      const response = await request(app)
+        .post('/users/login')
+        .type('form')
+        .send({ username: user1.username, password: passwordUser1 })
+        .expect(200);
+
+      token = response.body;
+    });
+
+    it('should return a 200 and add a category to the followed categories field', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_category`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ category_id: category1._id.toString() })
+        .expect((res) => {
+          expect(res.body.followed_categories).toContain(
+            category1._id.toString()
+          );
+        })
+        .expect(200);
+    });
+
+    it('should return a 200 and remove a category from the followed categories field if it is already followed', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_category`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ category_id: category1._id.toString() })
+        .expect((res) => {
+          expect(res.body.followed_categories).not.toContain(
+            category1._id.toString()
+          );
+        })
+        .expect(200);
+    });
+
+    it('should return a 200 and the user object with no password', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_category`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ category_id: category1._id.toString() })
+        .expect((res) => {
+          expect(res.body).not.toHaveProperty('password');
+        })
+        .expect(200);
+    });
+
+    it('should return a 400 and an error message if the category_id field is not a valid MongoDB ID', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_category`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ category_id: "I'm a valid category, for sure!"})
+        .expect(/valid mongodb id/i)
+        .expect(400);
+    });
+
+    it('should return a 400 and an error message if the category is not in the DB', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_category`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ category_id: category2._id.toString()})
+        .expect(/error while/i)
         .expect(400);
     });
   });
