@@ -222,7 +222,7 @@ export const updateUserCategories = [
     // Make sure the category exists and retrieve user
     const [categoryExists, user] = await Promise.all([
       Category.findById(categoryID).exec(),
-      User.findOne({ username }).exec(),
+      User.findOne({ username }, '-password').exec(),
     ]);
 
     if (!categoryExists) {
@@ -232,17 +232,18 @@ export const updateUserCategories = [
     }
 
     // Follow or unfollow the category
+    // Return updated user
     if (user.followed_categories.includes(categoryID)) {
       const index = user.followed_categories.indexOf(categoryID);
       user.followed_categories.splice(index, 1);
       await user.save();
 
-      return res.json('Category unfollowed successfully!');
+      return res.json(user);
     }
 
     user.followed_categories.push(categoryID);
     await user.save();
 
-    return res.json('Category followed successfully!');
+    return res.json(user);
   }),
 ];
