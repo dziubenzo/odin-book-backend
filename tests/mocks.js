@@ -64,11 +64,8 @@ export const category2 = {
 };
 
 export const category3 = {
-  ...category1,
-  _id: idCategory3,
   name: 'Rabbits',
   description: 'Rabbit-ish category, yay!',
-  slug: slugify('Rabbits', { lower: true }),
 };
 
 export const longDescription =

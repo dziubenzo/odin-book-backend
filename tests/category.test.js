@@ -69,8 +69,16 @@ describe('GET /categories', () => {
 
 describe('POST /categories', () => {
   let token = '';
+  const file = Buffer.from('Another legit file');
 
   beforeAll(async () => {
+    vi.mock('../config/cloudinary.js', () => {
+      return {
+        handleUpload: vi
+          .fn()
+          .mockResolvedValue({ secure_url: 'cool_cat_category_icon.png' }),
+      };
+    });
     const response = await request(app)
       .post('/users/login')
       .type('form')
@@ -113,6 +121,30 @@ describe('POST /categories', () => {
         })
         .expect(200);
     });
+
+    it('should return a 200 if an icon is attached with the request', async () => {
+      await request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .field('name', 'Category 4')
+        .field('description', 'Category 4 Description')
+        .attach('uploaded_icon', file, 'cool_cat_category_icon.png')
+        .expect(/successfully/i)
+        .expect(200);
+    });
+
+    it('should assign the uploaded category icon to the created category', async () => {
+      await request(app)
+        .get('/categories')
+        .auth(token, { type: 'bearer' })
+        .expect((res) => {
+          expect(res.body[res.body.length - 1]).toHaveProperty(
+            'icon',
+            'cool_cat_category_icon.png'
+          );
+        })
+        .expect(200);
+    });
   });
 
   describe('invalid category', () => {
@@ -144,8 +176,8 @@ describe('POST /categories', () => {
         .post('/categories')
         .auth(token, { type: 'bearer' })
         .type('form')
-        .send({ ...category3, name: '99badcategory' })
-        .expect(/start with a letter/i)
+        .send({ ...category3, name: '0badcategory' })
+        .expect(/cannot start with a number/i)
         .expect(400);
     });
 

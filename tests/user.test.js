@@ -115,12 +115,12 @@ describe('POST /users', () => {
         .expect(400);
     });
 
-    it('should return a 400 and an error message if the username does not match the pattern', async () => {
+    it('should return a 400 and an error message if the username starts with a number', async () => {
       await request(app)
         .post('/users')
         .type('form')
-        .send({ ...validCredentials, username: '99badusername' })
-        .expect(/start with a letter/i)
+        .send({ ...validCredentials, username: '9badusername' })
+        .expect(/cannot start with a number/i)
         .expect(400);
     });
 
@@ -268,7 +268,7 @@ describe('PUT /users/:username/update', () => {
     beforeAll(async () => {
       vi.mock('../config/cloudinary.js', () => {
         return {
-          handleAvatarUpload: vi
+          handleUpload: vi
             .fn()
             .mockResolvedValue({ secure_url: 'cool_cat_image.png' }),
         };
