@@ -16,10 +16,10 @@ export const checkUsernameAvailability = async (value) => {
   return Promise.resolve();
 };
 
-// Check if the username/category name provided is consistent with regex pattern (starts with a letter and contains only word characters)
-export const checkPattern = (value) => {
-  const regex = /^[a-zA-z]\w+$/;
-  return regex.test(value);
+// Check if the username/category name does not start with a number
+export const checkFirstCharacter = (value) => {
+  const firstCharacter = value[0];
+  return !(firstCharacter >= '0' && firstCharacter <= '9');
 };
 
 // Check if passwords match

@@ -4,7 +4,7 @@ import asyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
 import { getFirstErrorMsg, defaultCategoryIcon } from '../config/helpers.js';
 import {
-  checkPattern,
+  checkFirstCharacter,
   checkCategoryNameAvailability,
 } from '../config/middleware.js';
 import slugify from 'slugify';
@@ -27,9 +27,9 @@ export const createCategory = [
     .trim()
     .isLength({ min: 3, max: 32 })
     .withMessage('Category name must contain between 3 and 32 characters')
-    .custom(checkPattern)
+    .custom(checkFirstCharacter)
     .withMessage(
-      'Category name must start with a letter and contain only a-z, A-Z and 0-9 characters'
+      'Category name cannot start with a number'
     )
     .custom(checkCategoryNameAvailability)
     .withMessage('Category already exists'),
