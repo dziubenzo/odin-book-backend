@@ -12,7 +12,7 @@ import {
 } from '../config/middleware.js';
 import { getFirstErrorMsg, getRandomAvatar } from '../config/helpers.js';
 import { upload } from '../config/multer.js';
-import { handleAvatarUpload } from '../config/cloudinary.js';
+import { handleUpload } from '../config/cloudinary.js';
 
 import jwt from 'jsonwebtoken';
 
@@ -176,7 +176,7 @@ export const updateUser = [
     // Transform and upload avatar to Cloudinary if image sent with request
     if (req.file) {
       const [cloudinaryRes, user] = await Promise.all([
-        handleAvatarUpload(req.file),
+        handleUpload(req.file, 'odin_book/avatars'),
         User.findOne({ username }, '-password').exec(),
       ]);
 

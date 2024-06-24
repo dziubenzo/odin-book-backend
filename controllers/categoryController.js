@@ -8,6 +8,8 @@ import {
   checkCategoryNameAvailability,
 } from '../config/middleware.js';
 import slugify from 'slugify';
+import { upload } from '../config/multer.js';
+import { handleUpload } from '../config/cloudinary.js';
 
 // @desc    Get all categories
 // @route   GET /categories
@@ -20,6 +22,7 @@ export const getAllCategories = asyncHandler(async (req, res, next) => {
 // @desc    Create category
 // @route   POST /categories
 export const createCategory = [
+  upload.single('uploaded_icon'),
   body('name')
     .trim()
     .isLength({ min: 3, max: 32 })
@@ -30,7 +33,6 @@ export const createCategory = [
     )
     .custom(checkCategoryNameAvailability)
     .withMessage('Category already exists'),
-  body('icon').trim(),
   body('description')
     .trim()
     .isLength({ min: 3, max: 320 })
@@ -48,8 +50,18 @@ export const createCategory = [
     }
 
     const name = req.body.name;
-    const icon = req.body.icon || defaultCategoryIcon;
     const description = req.body.description;
+    let icon = defaultCategoryIcon;
+
+    // Transform and upload icon to Cloudinary if image sent with request
+    if (req.file) {
+      const cloudinaryRes = await handleUpload(
+        req.file,
+        'odin_book/category_icons'
+      );
+
+      icon = cloudinaryRes.secure_url;
+    }
 
     // Create new category
     await new Category({

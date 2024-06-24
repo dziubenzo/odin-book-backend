@@ -5,7 +5,7 @@ export const getFirstErrorMsg = (errors) => {
 
 // Default category icon
 export const defaultCategoryIcon =
-  'https://res.cloudinary.com/dvhkp9wc6/image/upload/v1716979473/odin_book/category_icons/cnngnuxrgf0kqkl8tnur.png';
+  'https://res.cloudinary.com/dvhkp9wc6/image/upload/v1719224975/odin_book/category_icons/default/yx1nunw6khsgatgbqczt.png';
 
 // Default avatars
 export const defaultAvatars = [
