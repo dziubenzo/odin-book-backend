@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Category from '../models/Category.js';
 
 import passport from 'passport';
+import slugify from 'slugify';
 
 // Check if the username provided is available (case-insensitive)
 export const checkUsernameAvailability = async (value) => {
@@ -27,14 +28,14 @@ export const checkPasswordsEquality = (value, { req }) => {
   return value === req.body.password;
 };
 
-// Check if the category name provided is available (case-insensitive)
+// Check if the category name provided is available based on potential slug equality (to ensure slug and, hence, name uniqueness)
 export const checkCategoryNameAvailability = async (value) => {
-  const categoryNameTaken = await Category.exists({
-    name: { $regex: value, $options: 'i' },
+  const categoryFound = await Category.findOne({
+    slug: slugify(value, { lower: true }),
   })
     .lean()
     .exec();
-  if (categoryNameTaken) {
+  if (categoryFound) {
     return Promise.reject();
   }
   return Promise.resolve();
