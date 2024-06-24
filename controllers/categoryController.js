@@ -28,9 +28,7 @@ export const createCategory = [
     .isLength({ min: 3, max: 32 })
     .withMessage('Category name must contain between 3 and 32 characters')
     .custom(checkFirstCharacter)
-    .withMessage(
-      'Category name cannot start with a number'
-    )
+    .withMessage('Category name cannot start with a number')
     .custom(checkCategoryNameAvailability)
     .withMessage('Category already exists'),
   body('description')

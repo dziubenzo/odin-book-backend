@@ -59,7 +59,7 @@ export const createComment = [
       .populate({ path: 'likes', select: 'username' })
       .populate({
         path: 'comments',
-        populate: { path: 'author', select: 'username' },
+        populate: { path: 'author', select: 'username avatar' },
         // Sort comments in descending order (newest first)
         options: { sort: { created_at: -1 } },
       })
