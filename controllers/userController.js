@@ -16,12 +16,14 @@ import { handleUpload } from '../config/cloudinary.js';
 
 import jwt from 'jsonwebtoken';
 
-// @desc    Get all users
+// @desc    Get all users (in ascending order)
 // @route   GET /users
 export const getAllUsers = [
   checkAuth,
   asyncHandler(async (req, res, next) => {
-    const allUsers = await User.find({}, '-password').exec();
+    const allUsers = await User.find({}, '-password')
+      .sort({ username: 1 })
+      .exec();
 
     return res.json(allUsers);
   }),
@@ -35,9 +37,7 @@ export const createUser = [
     .isLength({ min: 3, max: 16 })
     .withMessage('Username must contain between 3 and 16 characters')
     .custom(checkFirstCharacter)
-    .withMessage(
-      'Username cannot start with a number'
-    )
+    .withMessage('Username cannot start with a number')
     .custom(checkUsernameAvailability)
     .withMessage('Username already taken'),
   body('password')
