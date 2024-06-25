@@ -5,7 +5,8 @@ import {
   loginUser,
   authUser,
   updateUser,
-  updateUserCategories,
+  updateFollowedCategories,
+  updateFollowedUsers,
 } from '../controllers/userController.js';
 
 const router = Router();
@@ -20,6 +21,8 @@ router.post('/auth', authUser);
 
 router.put('/:username/update', updateUser);
 
-router.put('/:username/update_category', updateUserCategories);
+router.put('/:username/update_category', updateFollowedCategories);
+
+router.put('/:username/update_user', updateFollowedUsers);
 
 export default router;

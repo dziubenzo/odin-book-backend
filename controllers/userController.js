@@ -200,7 +200,7 @@ export const updateUser = [
 
 // @desc    Follow/unfollow category
 // @route   PUT /users/:username/update_category
-export const updateUserCategories = [
+export const updateFollowedCategories = [
   checkAuth,
   body('category_id')
     .trim()
@@ -242,6 +242,61 @@ export const updateUserCategories = [
     }
 
     user.followed_categories.push(categoryID);
+    await user.save();
+
+    return res.json(user);
+  }),
+];
+
+// @desc    Follow/unfollow user
+// @route   PUT /users/:username/update_user
+export const updateFollowedUsers = [
+  checkAuth,
+  body('user_id')
+    .trim()
+    .isMongoId()
+    .withMessage('User must be a valid MongoDB ID'),
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Return the first validation error message if there are any errors
+      const firstErrorMsg = getFirstErrorMsg(errors);
+      return res.status(400).json(firstErrorMsg);
+    }
+
+    const userID = req.body.user_id;
+    const username = req.params.username;
+
+    // Make sure the logged in user cannot follow themselves
+    if (userID === req.user._id.toString()) {
+      return res.status(400).json('You cannot follow yourself');
+    }
+
+    // Make sure the user exists and retrieve user
+    const [userExists, user] = await Promise.all([
+      User.findById(userID).exec(),
+      User.findOne({ username }, '-password').exec(),
+    ]);
+
+    if (!userExists) {
+      return res
+        .status(400)
+        .json('Error while following/unfollowing a user. Please try again');
+    }
+
+    // Follow or unfollow the user
+    // Return updated logged in user
+    if (user.followed_users.includes(userID)) {
+      const index = user.followed_users.indexOf(userID);
+      user.followed_users.splice(index, 1);
+      await user.save();
+
+      return res.json(user);
+    }
+
+    user.followed_users.push(userID);
     await user.save();
 
     return res.json(user);
