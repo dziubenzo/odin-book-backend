@@ -16,6 +16,7 @@ import {
   category2,
 } from './mocks.js';
 import { startMongoMemoryServer } from '../config/mongoDBTesting.js';
+import mongoose from 'mongoose';
 
 import passport from 'passport';
 import { jwtStrategy } from '../config/passport.js';
@@ -335,7 +336,7 @@ describe('PUT /users/:username/update_category', () => {
       await request(app)
         .put(`/users/${user1.username}/update_category`)
         .type('form')
-        .send({ category_id: category1._id })
+        .send({ category_id: category1._id.toString() })
         .expect(401);
     });
   });
@@ -400,7 +401,7 @@ describe('PUT /users/:username/update_category', () => {
         .put(`/users/${user1.username}/update_category`)
         .auth(token, { type: 'bearer' })
         .type('form')
-        .send({ category_id: "I'm a valid category, for sure!"})
+        .send({ category_id: "I'm a valid category, for sure!" })
         .expect(/valid mongodb id/i)
         .expect(400);
     });
@@ -410,8 +411,102 @@ describe('PUT /users/:username/update_category', () => {
         .put(`/users/${user1.username}/update_category`)
         .auth(token, { type: 'bearer' })
         .type('form')
-        .send({ category_id: category2._id.toString()})
+        .send({ category_id: category2._id.toString() })
         .expect(/error while/i)
+        .expect(400);
+    });
+  });
+});
+
+describe('PUT /users/:username/update_user', () => {
+  describe('no auth', () => {
+    it('should return a 401', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_user`)
+        .type('form')
+        .send({ user_id: user2._id.toString() })
+        .expect(401);
+    });
+  });
+
+  describe('auth', () => {
+    let token = '';
+
+    beforeAll(async () => {
+      const response = await request(app)
+        .post('/users/login')
+        .type('form')
+        .send({ username: user1.username, password: passwordUser1 })
+        .expect(200);
+
+      token = response.body;
+    });
+
+    it('should return a 200 and add a user to the followed users field', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_user`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user_id: user2._id.toString() })
+        .expect((res) => {
+          expect(res.body.followed_users).toContain(user2._id.toString());
+        })
+        .expect(200);
+    });
+
+    it('should return a 200 and remove a user from the followed users field if it is already followed', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_user`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user_id: user2._id.toString() })
+        .expect((res) => {
+          expect(res.body.followed_users).not.toContain(user2._id.toString());
+        })
+        .expect(200);
+    });
+
+    it('should return a 200 and the user object with no password', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_user`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user_id: user2._id.toString() })
+        .expect((res) => {
+          expect(res.body).not.toHaveProperty('password');
+        })
+        .expect(200);
+    });
+
+    it('should return a 400 and an error message if the user_id field is not a valid MongoDB ID', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_user`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user_id: "I've never been more valid than this..." })
+        .expect(/valid mongodb id/i)
+        .expect(400);
+    });
+
+    it('should return a 400 and an error message if the user is not in the DB', async () => {
+      const validID = new mongoose.Types.ObjectId();
+
+      await request(app)
+        .put(`/users/${user1.username}/update_user`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user_id: validID.toString() })
+        .expect(/error while/i)
+        .expect(400);
+    });
+
+    it('should return a 400 and an error message if the logged in user attempts to follow themselves', async () => {
+      await request(app)
+        .put(`/users/${user1.username}/update_user`)
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ user_id: user1._id.toString() })
+        .expect(/follow yourself/i)
         .expect(400);
     });
   });
