@@ -1,5 +1,7 @@
 import User from '../models/User.js';
 import Category from '../models/Category.js';
+import Post from '../models/Post.js';
+import Comment from '../models/Comment.js';
 
 import asyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
@@ -300,5 +302,56 @@ export const updateFollowedUsers = [
     await user.save();
 
     return res.json(user);
+  }),
+];
+
+// @desc    Get user
+// @desc    Retrieve other user information as well
+// @route   GET /users/:username
+export const getUser = [
+  checkAuth,
+  asyncHandler(async (req, res, next) => {
+    const username = req.params.username;
+
+    const user = await User.findOne({ username }, '-password').exec();
+
+    // Make sure the user exists
+    if (!user) {
+      return res
+        .status(400)
+        .json('Error while retrieving a user. Please try again');
+    }
+
+    // Get the number of posts, post likes, post dislikes, comments, comment likes, comment dislikes and followers of the user
+    const [
+      postsCount,
+      postLikesCount,
+      postDislikesCount,
+      commentsCount,
+      commentLikesCount,
+      commentDislikesCount,
+      followersCount,
+    ] = await Promise.all([
+      Post.countDocuments({ author: user._id }).exec(),
+      Post.countDocuments({ likes: user._id }).exec(),
+      Post.countDocuments({ dislikes: user._id }).exec(),
+      Comment.countDocuments({ author: user._id }).exec(),
+      Comment.countDocuments({ likes: user._id }).exec(),
+      Comment.countDocuments({ dislikes: user._id }).exec(),
+      User.countDocuments({ followed_users: user._id }).exec(),
+    ]);
+
+    // Return user and all counts as a single object
+    const enrichedUser = {
+      ...user._doc,
+      postsCount,
+      postLikesCount,
+      postDislikesCount,
+      commentsCount,
+      commentLikesCount,
+      commentDislikesCount,
+      followersCount,
+    };
+    return res.json(enrichedUser);
   }),
 ];
