@@ -306,7 +306,7 @@ export const updateFollowedUsers = [
 ];
 
 // @desc    Get user
-// @desc    Retrieve other user information as well
+// @desc    Get user stats as well
 // @route   GET /users/:username
 export const getUser = [
   checkAuth,

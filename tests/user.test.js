@@ -511,3 +511,54 @@ describe('PUT /users/:username/update_user', () => {
     });
   });
 });
+
+describe('GET /users/:username', () => {
+  describe('no auth', () => {
+    it('should return a 401', async () => {
+      await request(app).get(`/users/${user1.username}`).expect(401);
+    });
+  });
+
+  describe('auth', () => {
+    let token = '';
+
+    beforeAll(async () => {
+      const response = await request(app)
+        .post('/users/login')
+        .type('form')
+        .send({ username: user1.username, password: passwordUser1 })
+        .expect(200);
+
+      token = response.body;
+    });
+
+    it('should return a 200 and a user object with stats properties', async () => {
+      await request(app)
+        .get(`/users/${user2.username}`)
+        .auth(token, { type: 'bearer' })
+        .expect((res) => {
+          expect(res.body.username).toBe(user2.username);
+          expect(res.body.bio).toBe(user2.bio);
+          expect(res.body.avatar).toBe(user2.avatar);
+          expect(res.body).toHaveProperty('postsCount');
+          expect(res.body).toHaveProperty('postLikesCount');
+          expect(res.body).toHaveProperty('postDislikesCount');
+          expect(res.body).toHaveProperty('commentsCount');
+          expect(res.body).toHaveProperty('commentLikesCount');
+          expect(res.body).toHaveProperty('commentDislikesCount');
+          expect(res.body).toHaveProperty('followersCount');
+        })
+        .expect(200);
+    });
+
+    it('should return a 400 and an error message if the user is not in the DB', async () => {
+      const fakeUsername = 'fakeUsername';
+
+      await request(app)
+        .get(`/users/${fakeUsername}`)
+        .auth(token, { type: 'bearer' })
+        .expect(/error while/i)
+        .expect(400);
+    });
+  });
+});
