@@ -7,6 +7,8 @@ import { body, query, validationResult } from 'express-validator';
 import { getFirstErrorMsg } from '../config/helpers.js';
 import slugify from 'slugify';
 import crypto from 'crypto';
+import sanitizeHtml from 'sanitize-html';
+import { upload } from '../config/multer.js';
 
 // @desc    Get all posts in descending order (newest first)
 // @desc    Accepts limit query parameter
@@ -43,6 +45,7 @@ export const getAllPosts = [
 // @desc    Create post
 // @route   POST /posts
 export const createPost = [
+  upload.single('uploaded_image'),
   body('author')
     .trim()
     .isMongoId()
@@ -68,10 +71,11 @@ export const createPost = [
       const firstErrorMsg = getFirstErrorMsg(errors);
       return res.status(400).json(firstErrorMsg);
     }
-
+    
     const author = req.body.author;
     const title = req.body.title;
-    const content = req.body.content;
+    // Sanitise HTML content
+    const content = sanitizeHtml(req.body.content);
     const category = req.body.category;
 
     // Make sure both the author and the category exist in the DB
