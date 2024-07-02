@@ -8,7 +8,7 @@ cloudinary.config({
   secure: true,
 });
 
-// Transform received image and upload it to Cloudinary
+// Transform received avatar/icon and upload it to Cloudinary
 export async function handleUpload(file, path) {
   const b64 = Buffer.from(file.buffer).toString('base64');
   const dataURI = 'data:' + file.mimetype + ';base64,' + b64;
@@ -17,6 +17,20 @@ export async function handleUpload(file, path) {
     folder: path,
     resource_type: 'image',
     transformation: ['roundify'],
+  });
+  return cloudinaryRes;
+}
+
+// Transform received post image and upload it to Cloudinary
+export async function handlePostImageUpload(buffer, mimetype) {
+  const b64 = Buffer.from(buffer).toString('base64');
+  const dataURI = 'data:' + mimetype + ';base64,' + b64;
+
+  const cloudinaryRes = await cloudinary.uploader.upload(dataURI, {
+    folder: 'odin_book/images',
+    resource_type: 'image',
+    // Do not transform GIFs
+    transformation: mimetype === 'image/gif' ? [] : ['smallify'],
   });
   return cloudinaryRes;
 }

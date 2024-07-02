@@ -4,11 +4,14 @@ import Category from '../models/Category.js';
 
 import asyncHandler from 'express-async-handler';
 import { body, query, validationResult } from 'express-validator';
-import { getFirstErrorMsg } from '../config/helpers.js';
+import { allowedImageFormats, getFirstErrorMsg } from '../config/helpers.js';
 import slugify from 'slugify';
 import crypto from 'crypto';
 import sanitizeHtml from 'sanitize-html';
 import { upload } from '../config/multer.js';
+import { checkPostType } from '../config/middleware.js';
+import fetch from 'node-fetch';
+import { handlePostImageUpload } from '../config/cloudinary.js';
 
 // @desc    Get all posts in descending order (newest first)
 // @desc    Accepts limit query parameter
@@ -46,6 +49,11 @@ export const getAllPosts = [
 // @route   POST /posts
 export const createPost = [
   upload.single('uploaded_image'),
+  query('type')
+    .trim()
+    .isString()
+    .custom(checkPostType)
+    .withMessage('Invalid post type'),
   body('author')
     .trim()
     .isMongoId()
@@ -71,12 +79,17 @@ export const createPost = [
       const firstErrorMsg = getFirstErrorMsg(errors);
       return res.status(400).json(firstErrorMsg);
     }
-    
+
+    const type = req.query.type;
     const author = req.body.author;
     const title = req.body.title;
-    // Sanitise HTML content
-    const content = sanitizeHtml(req.body.content);
     const category = req.body.category;
+    let content;
+
+    if (type === 'text') {
+      // Sanitise HTML content
+      content = sanitizeHtml(req.body.content);
+    }
 
     // Make sure both the author and the category exist in the DB
     const [authorExists, categoryExists] = await Promise.all([
@@ -89,6 +102,27 @@ export const createPost = [
       return res
         .status(400)
         .json('Error while creating a post. Please try again');
+    }
+
+    if (type === 'image') {
+      const response = await fetch(req.body.content);
+      if (!response.ok) {
+        return res
+          .status(400)
+          .json('Error while creating a post. Please try again');
+      }
+      const contentType = response.headers.get('content-type');
+      // Make sure only supported image formats are accepted
+      if (!allowedImageFormats.includes(contentType)) {
+        return res.status(400).json('Unsupported image format');
+      }
+      const resBuffer = await response.arrayBuffer();
+      const { secure_url } = await handlePostImageUpload(
+        resBuffer,
+        contentType
+      );
+      // Create an img tag with the uploaded image
+      content = `<img class="post-image" src="${secure_url}" alt="Image for the ${title} post"/>`;
     }
 
     // Generate a random eight-character string to add to the end of the slug to ensure that the slug is unique

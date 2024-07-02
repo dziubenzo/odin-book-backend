@@ -24,3 +24,12 @@ export const getRandomAvatar = () => {
   const index = Math.floor(Math.random() * defaultAvatars.length);
   return defaultAvatars[index];
 };
+
+// Verify the file format of the downloaded image
+export const allowedImageFormats = [
+  'image/avif',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+];

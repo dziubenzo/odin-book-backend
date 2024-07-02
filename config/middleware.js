@@ -43,3 +43,13 @@ export const checkCategoryNameAvailability = async (value) => {
 
 // Check if user is authenticated
 export const checkAuth = passport.authenticate('jwt', { session: false });
+
+// Check if the post type is one of the three allowed types
+export const checkPostType = (value) => {
+  const postTypes = ['text', 'image', 'video'];
+  if (postTypes.includes(value)) {
+    return true;
+  } else {
+    return false;
+  }
+};
