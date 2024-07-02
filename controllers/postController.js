@@ -86,6 +86,7 @@ export const createPost = [
     const category = req.body.category;
     let content;
 
+    // Handle text post
     if (type === 'text') {
       // Sanitise HTML content
       content = sanitizeHtml(req.body.content);
@@ -104,7 +105,19 @@ export const createPost = [
         .json('Error while creating a post. Please try again');
     }
 
-    if (type === 'image') {
+    // Handle image post (both URL and file)
+    if (type === 'image' && req.file) {
+      // Make sure only supported image formats are accepted
+      if (!allowedImageFormats.includes(req.file.mimetype)) {
+        return res.status(400).json('Unsupported image format');
+      }
+      const { secure_url } = await handlePostImageUpload(
+        req.file.buffer,
+        req.file.mimetype
+      );
+      // Create an img tag with the uploaded image
+      content = `<img class="post-image" src="${secure_url}" alt="Image for the ${title} post"/>`;
+    } else if (type === 'image') {
       const response = await fetch(req.body.content);
       if (!response.ok) {
         return res
@@ -112,7 +125,6 @@ export const createPost = [
           .json('Error while creating a post. Please try again');
       }
       const contentType = response.headers.get('content-type');
-      // Make sure only supported image formats are accepted
       if (!allowedImageFormats.includes(contentType)) {
         return res.status(400).json('Unsupported image format');
       }
@@ -121,7 +133,6 @@ export const createPost = [
         resBuffer,
         contentType
       );
-      // Create an img tag with the uploaded image
       content = `<img class="post-image" src="${secure_url}" alt="Image for the ${title} post"/>`;
     }
 
