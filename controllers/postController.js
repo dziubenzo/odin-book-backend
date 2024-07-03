@@ -109,7 +109,7 @@ export const createPost = [
     if (type === 'image' && req.file) {
       // Make sure only supported image formats are accepted
       if (!allowedImageFormats.includes(req.file.mimetype)) {
-        return res.status(400).json('Unsupported image format');
+        return res.status(400).json('Unsupported file format');
       }
       const { secure_url } = await handlePostImageUpload(
         req.file.buffer,
@@ -126,7 +126,7 @@ export const createPost = [
       }
       const contentType = response.headers.get('content-type');
       if (!allowedImageFormats.includes(contentType)) {
-        return res.status(400).json('Unsupported image format');
+        return res.status(400).json('Unsupported file format');
       }
       const resBuffer = await response.arrayBuffer();
       const { secure_url } = await handlePostImageUpload(

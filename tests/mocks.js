@@ -125,3 +125,10 @@ export const comment2 = {
   created_at: Date.now(),
   likes: [],
 };
+
+/* 
+YouTube links
+*/
+
+export const goodYouTubeLink = 'https://www.youtube.com/embed/goodlink';
+export const badYouTubeLink = 'https://www.google.com/embed/badlink';

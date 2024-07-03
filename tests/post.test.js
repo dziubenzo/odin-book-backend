@@ -17,8 +17,11 @@ import {
   post1,
   post2,
   post3,
+  goodYouTubeLink,
+  badYouTubeLink,
 } from './mocks.js';
 import mongoose from 'mongoose';
+import fetch from 'node-fetch';
 
 import passport from 'passport';
 import { jwtStrategy } from '../config/passport.js';
@@ -121,6 +124,16 @@ describe('POST /posts', () => {
   let token = '';
 
   beforeAll(async () => {
+    vi.mock('node-fetch');
+    
+    vi.mock('../config/cloudinary.js', () => {
+      return {
+        handlePostImageUpload: vi
+          .fn()
+          .mockResolvedValue({ secure_url: 'amazing_post_image.jpeg' }),
+      };
+    });
+
     const response = await request(app)
       .post('/users/login')
       .type('form')
@@ -132,14 +145,40 @@ describe('POST /posts', () => {
 
   describe('no auth', () => {
     it('should return a 401', async () => {
-      await request(app).post('/posts').type('form').send(post3).expect(401);
+      await request(app)
+        .post('/posts/?type=text')
+        .type('form')
+        .send(post3)
+        .expect(401);
     });
   });
 
-  describe('valid post', () => {
+  describe('query parameter', () => {
+    it('should return a 400 an an error message if the query parameter is invalid', async () => {
+      await request(app)
+        .post('/posts/?type=sound')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send(post3)
+        .expect(/invalid post type/i)
+        .expect(400);
+    });
+
+    it('should return a 400 an an error message if the query parameter is missing', async () => {
+      await request(app)
+        .post('/posts/')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send(post3)
+        .expect(/invalid post type/i)
+        .expect(400);
+    });
+  });
+
+  describe('valid post - text and general', () => {
     it('should return a 200 and the new post that is liked by the post author', async () => {
       await request(app)
-        .post('/posts')
+        .post('/posts/?type=text')
         .auth(token, { type: 'bearer' })
         .type('form')
         .send(post3)
@@ -153,10 +192,10 @@ describe('POST /posts', () => {
     });
   });
 
-  describe('invalid post', () => {
+  describe('invalid post - text and general', () => {
     it('should return a 400 and an error message if the author is not a valid MongoDB ID', async () => {
       await request(app)
-        .post('/posts')
+        .post('/posts/?type=text')
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ ...post3, author: 'Me!' })
@@ -164,9 +203,19 @@ describe('POST /posts', () => {
         .expect(400);
     });
 
+    it('should return a 400 and an error message if the author field is missing', async () => {
+      await request(app)
+        .post('/posts/?type=text')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ ...post3, author: undefined })
+        .expect(/author field must be/i)
+        .expect(400);
+    });
+
     it('should return a 400 and an error message if the title is too short', async () => {
       await request(app)
-        .post('/posts')
+        .post('/posts/?type=text')
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ ...post3, title: 'ti' })
@@ -174,9 +223,19 @@ describe('POST /posts', () => {
         .expect(400);
     });
 
+    it('should return a 400 and an error message if the title field is missing', async () => {
+      await request(app)
+        .post('/posts/?type=text')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ ...post3, title: undefined })
+        .expect(/post title must contain/i)
+        .expect(400);
+    });
+
     it('should return a 400 and an error message if the title is too long', async () => {
       await request(app)
-        .post('/posts')
+        .post('/posts/?type=text')
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({
@@ -190,7 +249,7 @@ describe('POST /posts', () => {
 
     it('should return a 400 and an error message if the content is too short', async () => {
       await request(app)
-        .post('/posts')
+        .post('/posts/?type=text')
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ ...post3, content: 'Shorty' })
@@ -198,12 +257,32 @@ describe('POST /posts', () => {
         .expect(400);
     });
 
+    it('should return a 400 and an error message if the content field is missing', async () => {
+      await request(app)
+        .post('/posts/?type=text')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ ...post3, content: undefined })
+        .expect(/post content must contain/i)
+        .expect(400);
+    });
+
     it('should return a 400 and an error message if the category is not a valid MongoDB ID', async () => {
       await request(app)
-        .post('/posts')
+        .post('/posts/?type=text')
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ ...post3, category: 'SliceOfLife' })
+        .expect(/category field must be/i)
+        .expect(400);
+    });
+
+    it('should return a 400 and an error message if the category field is missing', async () => {
+      await request(app)
+        .post('/posts/?type=text')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ ...post3, category: undefined })
         .expect(/category field must be/i)
         .expect(400);
     });
@@ -212,7 +291,7 @@ describe('POST /posts', () => {
       const validMongoID = new mongoose.Types.ObjectId().toString();
 
       await request(app)
-        .post('/posts')
+        .post('/posts/?type=text')
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ ...post3, author: validMongoID })
@@ -224,10 +303,155 @@ describe('POST /posts', () => {
       const validMongoID = new mongoose.Types.ObjectId().toString();
 
       await request(app)
-        .post('/posts')
+        .post('/posts/?type=text')
         .auth(token, { type: 'bearer' })
         .type('form')
         .send({ ...post3, category: validMongoID })
+        .expect(/error while/i)
+        .expect(400);
+    });
+  });
+
+  describe('valid post - image file', () => {
+    const file = Buffer.from('Trust me - I am, indeed, a file');
+
+    it('should return a 200 and the image in an <img> tag with the uploaded image URL as the src attribute', async () => {
+      await request(app)
+        .post('/posts/?type=image')
+        .auth(token, { type: 'bearer' })
+        .field('author', user1._id.toString())
+        .field('title', post3.title)
+        .field('content', post3.content)
+        .field('category', post3.category)
+        .attach('uploaded_image', file, {
+          filename: 'amazing_post_image.jpeg',
+          contentType: 'image/jpeg',
+        })
+        .expect((res) => {
+          expect(res.body.content).toMatch(/src="amazing_post_image.jpeg"/i);
+          expect(res.body.content).toMatch(/class="post-image"/i);
+          expect(res.body.content).toMatch(
+            new RegExp(`alt="Image for the ${post3.title} post"`, 'i')
+          );
+          expect(res.body.content.startsWith('<img')).toBe(true);
+        })
+        .expect(200);
+    });
+  });
+
+  describe('invalid post - image file', () => {
+    const file = Buffer.from('I am not a bad file, I have my uses!');
+
+    it('should return a 400 and an error message if the file is in incorrect format', async () => {
+      await request(app)
+        .post('/posts/?type=image')
+        .auth(token, { type: 'bearer' })
+        .field('author', user1._id.toString())
+        .field('title', post3.title)
+        .field('content', post3.content)
+        .field('category', post3.category)
+        .attach('uploaded_image', file, {
+          filename: 'amazing_post_image.jpeg',
+          contentType: 'image/apng',
+        })
+        .expect(/unsupported file format/i)
+        .expect(400);
+    });
+  });
+
+  describe('valid post - image URL', () => {
+    it('should return a 200 and the image in an <img> tag with the uploaded image URL as the src attribute', async () => {
+      // Mock fetch with proper response
+      const response = new Response(post3.content, {
+        headers: new Headers({
+          'content-type': 'image/gif',
+        }),
+      });
+      fetch.mockResolvedValue(Promise.resolve(response));
+
+      await request(app)
+        .post('/posts/?type=image')
+        .auth(token, { type: 'bearer' })
+        .field('author', user1._id.toString())
+        .field('title', post3.title)
+        .field('content', post3.content)
+        .field('category', post3.category)
+        .expect((res) => {
+          expect(res.body.content).toMatch(/src="amazing_post_image.jpeg"/i);
+          expect(res.body.content).toMatch(/class="post-image"/i);
+          expect(res.body.content).toMatch(
+            new RegExp(`alt="Image for the ${post3.title} post"`, 'i')
+          );
+          expect(res.body.content.startsWith('<img')).toBe(true);
+        })
+        .expect(200);
+    });
+  });
+
+  describe('invalid post - image URL', () => {
+    it('should return a 400 and an error message if the image URL is in incorrect format', async () => {
+      // Mock fetch with improper response
+      const response = new Response(post3.content, {
+        headers: new Headers({
+          'content-type': 'text/css',
+        }),
+      });
+      fetch.mockResolvedValue(Promise.resolve(response));
+
+      await request(app)
+        .post('/posts/?type=image')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send(post3)
+        .expect(/unsupported file format/i)
+        .expect(400);
+    });
+
+    it('should return a 400 and an error message if there is something wrong with fetching an image from the image URL', async () => {
+      // Mock fetch failure
+      fetch.mockResolvedValue(Promise.resolve({ ok: false }));
+
+      await request(app)
+        .post('/posts/?type=image')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send(post3)
+        .expect(/error while/i)
+        .expect(400);
+    });
+  });
+
+  describe('valid post - video URL', () => {
+    it('should return a 200 and the video in an <iframe> tag with the video URL as the src attribute', async () => {
+      await request(app)
+        .post('/posts/?type=video')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ ...post3, content: goodYouTubeLink })
+        .expect((res) => {
+          expect(res.body.content).toMatch(
+            new RegExp(`src="${goodYouTubeLink}"`, 'i')
+          );
+          expect(res.body.content).toMatch(/class="yt-video-player"/i);
+          expect(res.body.content).toMatch(
+            new RegExp(
+              `title="YouTube video player for the ${post3.title} post"`,
+              'i'
+            )
+          );
+          expect(res.body.content.startsWith('<iframe')).toBe(true);
+        })
+        .expect(200);
+    });
+  });
+
+  describe('invalid post - video URL', () => {
+    it('should return a 400 and an error message if the video URL is incorrect', async () => {
+      await request(app)
+        .post('/posts/?type=video')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ ...post3, content: badYouTubeLink })
         .expect(/error while/i)
         .expect(400);
     });
