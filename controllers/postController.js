@@ -136,6 +136,17 @@ export const createPost = [
       content = `<img class="post-image" src="${secure_url}" alt="Image for the ${title} post"/>`;
     }
 
+    // Handle video post
+    if (type === 'video') {
+      // Make sure the link is of a YT embed type
+      if (!req.body.content.startsWith('https://www.youtube.com/embed/')) {
+        return res
+          .status(400)
+          .json('Error while creating a post. Please try again');
+      }
+      content = `<iframe class="yt-video-player" src="${req.body.content}" title="YouTube video player for the ${title} post" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""/>`;
+    }
+
     // Generate a random eight-character string to add to the end of the slug to ensure that the slug is unique
     const uniqueString = '-' + crypto.randomUUID().slice(0, 8);
 
