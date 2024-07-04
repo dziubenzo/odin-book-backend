@@ -3,13 +3,31 @@ import bcrypt from 'bcryptjs';
 import slugify from 'slugify';
 
 /* 
+Mongo IDs
+*/
+
+export const idUser1 = new mongoose.Types.ObjectId();
+export const idUser2 = new mongoose.Types.ObjectId();
+export const idUser3 = new mongoose.Types.ObjectId();
+
+export const idCategory1 = new mongoose.Types.ObjectId();
+export const idCategory2 = new mongoose.Types.ObjectId();
+export const idCategory3 = new mongoose.Types.ObjectId();
+
+export const idPost1 = new mongoose.Types.ObjectId();
+export const idPost2 = new mongoose.Types.ObjectId();
+export const idPost3 = new mongoose.Types.ObjectId();
+export const idPost4 = new mongoose.Types.ObjectId();
+
+export const idComment2 = new mongoose.Types.ObjectId();
+
+/* 
 Users
 */
 
 export const passwordUser1 = 'password1';
 export const passwordUser2 = 'password2';
-export const idUser1 = new mongoose.Types.ObjectId();
-export const idUser2 = new mongoose.Types.ObjectId();
+export const passwordUser3 = 'password3';
 
 export const user1 = {
   _id: idUser1,
@@ -29,6 +47,15 @@ export const user2 = {
   password: await bcrypt.hash(passwordUser2, 10),
 };
 
+export const user3 = {
+  ...user1,
+  _id: idUser3,
+  username: 'user3',
+  password: await bcrypt.hash(passwordUser3, 10),
+  followed_users: [idUser1.toString()],
+  followed_categories: [idCategory1.toString()],
+};
+
 export const validCredentials = {
   username: 'user3',
   password: 'password',
@@ -41,10 +68,6 @@ export const longBio =
 /* 
 Categories
 */
-
-export const idCategory1 = new mongoose.Types.ObjectId();
-export const idCategory2 = new mongoose.Types.ObjectId();
-export const idCategory3 = new mongoose.Types.ObjectId();
 
 export const category1 = {
   _id: idCategory1,
@@ -74,10 +97,6 @@ export const longDescription =
 /* 
 Posts
 */
-
-export const idPost1 = new mongoose.Types.ObjectId();
-export const idPost2 = new mongoose.Types.ObjectId();
-export const idPost3 = new mongoose.Types.ObjectId();
 
 export const post1 = {
   _id: idPost1,
@@ -112,11 +131,22 @@ export const post3 = {
   slug: slugify('Post 3', { lower: true }),
 };
 
+export const post4 = {
+  ...post1,
+  _id: idPost4,
+  author: idUser3.toString(),
+  title: 'Post 4',
+  content: 'Post 4 Content, yay!',
+  category: idCategory1.toString(),
+  created_at: Date.now(),
+  likes: [idUser3.toString()],
+  slug: slugify('Post 4', { lower: true }),
+};
+
 /* 
 Comments
 */
 
-export const idComment2 = new mongoose.Types.ObjectId();
 
 export const comment2 = {
   _id: idComment2,

@@ -11,12 +11,16 @@ import 'dotenv/config.js';
 import { startMongoMemoryServer } from '../config/mongoDBTesting.js';
 import {
   user1,
+  user2,
+  user3,
   passwordUser1,
+  passwordUser3,
   category1,
   category2,
   post1,
   post2,
   post3,
+  post4,
   goodYouTubeLink,
   badYouTubeLink,
 } from './mocks.js';
@@ -47,28 +51,31 @@ describe('GET /posts', () => {
 
     beforeAll(async () => {
       await new User(user1).save();
+      await new User(user2).save();
+      await new User(user3).save();
       await new Category(category1).save();
       await new Category(category2).save();
       await new Post(post1).save();
       await new Post(post2).save();
+      await new Post(post4).save();
 
       const response = await request(app)
         .post('/users/login')
         .type('form')
-        .send({ username: user1.username, password: passwordUser1 })
+        .send({ username: user3.username, password: passwordUser3 })
         .expect(200);
 
       token = response.body;
     });
 
-    describe('without limit query parameter', () => {
+    describe('without limit and filter query parameters', () => {
       it('should return a 200 and an array of all post objects in descending order', async () => {
         await request(app)
           .get('/posts')
           .auth(token, { type: 'bearer' })
           .expect('Content-Type', /json/)
           .expect((res) => {
-            expect(res.body).toHaveLength(2);
+            expect(res.body).toHaveLength(3);
             expect(
               res.body[0].created_at > res.body[1].created_at
             ).toBeTruthy();
@@ -117,6 +124,87 @@ describe('GET /posts', () => {
           .expect(400);
       });
     });
+
+    describe('with filter query parameter', () => {
+      it('should return a 200 and an array of all posts posted in categories followed by the logged-in user', async () => {
+        const filter = 'categories';
+
+        await request(app)
+          .get(`/posts?filter=${filter}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect((res) => {
+            const arrayOfPosts = res.body;
+            expect(arrayOfPosts.length).toBeGreaterThan(0);
+            for (let post of arrayOfPosts) {
+              expect(post.category._id).toBe(user3.followed_categories[0]);
+            }
+          })
+          .expect(200);
+      });
+
+      it('should return a 200 and an array of all posts posted by users followed by the logged-in user', async () => {
+        const filter = 'following';
+
+        await request(app)
+          .get(`/posts?filter=${filter}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect((res) => {
+            const arrayOfPosts = res.body;
+            expect(arrayOfPosts.length).toBeGreaterThan(0);
+            for (let post of arrayOfPosts) {
+              expect(post.author._id).toBe(user3.followed_users[0]);
+            }
+          })
+          .expect(200);
+      });
+
+      it('should return a 200 and an array of all posts liked by the logged-in user', async () => {
+        const filter = 'liked';
+
+        await request(app)
+          .get(`/posts?filter=${filter}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect((res) => {
+            const arrayOfPosts = res.body;
+            expect(arrayOfPosts.length).toBeGreaterThan(0);
+            for (let post of arrayOfPosts) {
+              expect(post.likes).toContain(user3._id.toString());
+            }
+          })
+          .expect(200);
+      });
+
+      it('should return a 200 and an array of all posts posted by the logged-in user', async () => {
+        const filter = 'yours';
+
+        await request(app)
+          .get(`/posts?filter=${filter}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect((res) => {
+            const arrayOfPosts = res.body;
+            expect(arrayOfPosts.length).toBeGreaterThan(0);
+            for (let post of arrayOfPosts) {
+              expect(post.author._id).toBe(user3._id.toString());
+            }
+          })
+          .expect(200);
+      });
+
+      it('should return a 400 and an error message if the filter query parameter is not on the allowed list', async () => {
+        const filter = 'beaver';
+
+        await request(app)
+          .get(`/posts?filter=${filter}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect(/invalid filter/i)
+          .expect(400);
+      });
+    });
   });
 });
 
@@ -125,7 +213,7 @@ describe('POST /posts', () => {
 
   beforeAll(async () => {
     vi.mock('node-fetch');
-    
+
     vi.mock('../config/cloudinary.js', () => {
       return {
         handlePostImageUpload: vi

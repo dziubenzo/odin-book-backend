@@ -28,8 +28,6 @@ export const getAllPosts = [
   query('filter')
     .optional()
     .trim()
-    .isString()
-    .withMessage('Filter query parameter must be a string')
     .custom(checkFilterQueryParameter)
     .withMessage('Invalid filter query parameter'),
 
