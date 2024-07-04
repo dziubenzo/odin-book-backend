@@ -25,11 +25,22 @@ export const getRandomAvatar = () => {
   return defaultAvatars[index];
 };
 
-// Verify the file format of the downloaded image
+// Allowed post image file formats
 export const allowedImageFormats = [
   'image/avif',
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
+];
+
+// Allowed post types
+export const allowedPostTypes = ['text', 'image', 'video'];
+
+// Allowed post filter query parameter values
+export const allowedFilterValues = [
+  'categories',
+  'following',
+  'liked',
+  'yours',
 ];

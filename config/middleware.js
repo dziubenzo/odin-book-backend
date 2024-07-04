@@ -3,6 +3,7 @@ import Category from '../models/Category.js';
 
 import passport from 'passport';
 import slugify from 'slugify';
+import { allowedFilterValues, allowedPostTypes } from './helpers.js';
 
 // Check if the username provided is available (case-insensitive)
 export const checkUsernameAvailability = async (value) => {
@@ -44,10 +45,18 @@ export const checkCategoryNameAvailability = async (value) => {
 // Check if user is authenticated
 export const checkAuth = passport.authenticate('jwt', { session: false });
 
-// Check if the post type is one of the three allowed types
+// Check if the post type query parameter is one of the three allowed types
 export const checkPostType = (value) => {
-  const postTypes = ['text', 'image', 'video'];
-  if (postTypes.includes(value)) {
+  if (allowedPostTypes.includes(value)) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+// Check if the filter query parameter is one of the four allowed types
+export const checkFilterQueryParameter = (value) => {
+  if (allowedFilterValues.includes(value)) {
     return true;
   } else {
     return false;

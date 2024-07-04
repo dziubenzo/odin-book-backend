@@ -9,12 +9,15 @@ import slugify from 'slugify';
 import crypto from 'crypto';
 import sanitizeHtml from 'sanitize-html';
 import { upload } from '../config/multer.js';
-import { checkPostType } from '../config/middleware.js';
+import {
+  checkFilterQueryParameter,
+  checkPostType,
+} from '../config/middleware.js';
 import fetch from 'node-fetch';
 import { handlePostImageUpload } from '../config/cloudinary.js';
 
 // @desc    Get all posts in descending order (newest first)
-// @desc    Accepts limit query parameter
+// @desc    Accepts limit and filter query parameters
 // @route   GET /posts
 export const getAllPosts = [
   query('limit')
@@ -22,6 +25,13 @@ export const getAllPosts = [
     .trim()
     .isInt()
     .withMessage('Limit query parameter must be an integer'),
+  query('filter')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('Filter query parameter must be a string')
+    .custom(checkFilterQueryParameter)
+    .withMessage('Invalid filter query parameter'),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
@@ -33,8 +43,29 @@ export const getAllPosts = [
     }
 
     const limit = req.query.limit;
+    const filter = req.query.filter;
+    let query = {};
 
-    const allPosts = await Post.find({})
+    // Construct a query if the filter query parameter is provided
+    if (filter) {
+      const loggedInUser = req.user;
+      switch (filter) {
+        case 'categories':
+          query = { category: loggedInUser.followed_categories };
+          break;
+        case 'following':
+          query = { author: loggedInUser.followed_users };
+          break;
+        case 'liked':
+          query = { likes: loggedInUser._id };
+          break;
+        case 'yours':
+          query = { author: loggedInUser._id };
+          break;
+      }
+    }
+
+    const allPosts = await Post.find(query)
       .populate({ path: 'author', select: 'username' })
       .populate({ path: 'category', select: 'name slug' })
       .sort({ created_at: -1 })
