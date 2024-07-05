@@ -205,6 +205,34 @@ describe('GET /posts', () => {
           .expect(400);
       });
     });
+
+    describe('with category query parameter', () => {
+      it('should return a 200 and an array of all posts in a given category', async () => {
+        await request(app)
+          .get(`/posts?category=${category1.slug}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect((res) => {
+            const arrayOfPosts = res.body;
+            expect(arrayOfPosts.length).toBeGreaterThan(0);
+            for (let post of arrayOfPosts) {
+              expect(post.category._id).toBe(category1._id.toString());
+            }
+          })
+          .expect(200);
+      });
+
+      it('should return a 400 and an error message if the category provided does not exist', async () => {
+        const madeUpCategory = 'funny-beavers';
+
+        await request(app)
+          .get(`/posts?category=${madeUpCategory}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect(/invalid category/i)
+          .expect(400);
+      });
+    });
   });
 });
 

@@ -35,7 +35,7 @@ export const getAllPosts = [
     .optional()
     .trim()
     .custom(checkCategoryExistence)
-    .withMessage('Category not found'),
+    .withMessage('Invalid category query parameter'),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
