@@ -10,6 +10,7 @@ import crypto from 'crypto';
 import sanitizeHtml from 'sanitize-html';
 import { upload } from '../config/multer.js';
 import {
+  checkCategoryExistence,
   checkFilterQueryParameter,
   checkPostType,
 } from '../config/middleware.js';
@@ -30,6 +31,11 @@ export const getAllPosts = [
     .trim()
     .custom(checkFilterQueryParameter)
     .withMessage('Invalid filter query parameter'),
+  query('category')
+    .optional()
+    .trim()
+    .custom(checkCategoryExistence)
+    .withMessage('Category not found'),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
@@ -42,9 +48,10 @@ export const getAllPosts = [
 
     const limit = req.query.limit;
     const filter = req.query.filter;
+    const category = req.query.category;
     let query = {};
 
-    // Construct a query if the filter query parameter is provided
+    // Construct a query if the filter or category query parameter is provided
     if (filter) {
       const loggedInUser = req.user;
       switch (filter) {
@@ -63,10 +70,16 @@ export const getAllPosts = [
       }
     }
 
+    if (category) {
+      const categoryID = req.query.categoryID;
+      query = { category: categoryID };
+    }
+
     const allPosts = await Post.find(query)
       .populate({ path: 'author', select: 'username' })
       .populate({ path: 'category', select: 'name slug' })
       .sort({ created_at: -1 })
+      // Apply the limit if provided
       .limit(limit ?? limit)
       .exec();
 

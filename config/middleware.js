@@ -62,3 +62,18 @@ export const checkFilterQueryParameter = (value) => {
     return false;
   }
 };
+
+// Check if the category provided in the category query parameter exists
+// If it does, save the category ID for later use
+export const checkCategoryExistence = async (value, { req }) => {
+  const categoryExists = await Category.findOne({
+    slug: value,
+  })
+    .lean()
+    .exec();
+  if (categoryExists) {
+    req.query.categoryID = categoryExists._id;
+    return Promise.resolve();
+  }
+  return Promise.reject();
+};
