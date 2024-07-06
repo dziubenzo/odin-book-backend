@@ -313,7 +313,7 @@ export const getUser = [
   asyncHandler(async (req, res, next) => {
     const username = req.params.username;
 
-    const user = await User.findOne({ username }, '-password').exec();
+    const user = await User.findOne({ username }, '-password').lean().exec();
 
     // Make sure the user exists
     if (!user) {
@@ -332,18 +332,18 @@ export const getUser = [
       commentDislikesCount,
       followersCount,
     ] = await Promise.all([
-      Post.countDocuments({ author: user._id }).exec(),
-      Post.countDocuments({ likes: user._id }).exec(),
-      Post.countDocuments({ dislikes: user._id }).exec(),
-      Comment.countDocuments({ author: user._id }).exec(),
-      Comment.countDocuments({ likes: user._id }).exec(),
-      Comment.countDocuments({ dislikes: user._id }).exec(),
-      User.countDocuments({ followed_users: user._id }).exec(),
+      Post.countDocuments({ author: user._id }).lean().exec(),
+      Post.countDocuments({ likes: user._id }).lean().exec(),
+      Post.countDocuments({ dislikes: user._id }).lean().exec(),
+      Comment.countDocuments({ author: user._id }).lean().exec(),
+      Comment.countDocuments({ likes: user._id }).lean().exec(),
+      Comment.countDocuments({ dislikes: user._id }).lean().exec(),
+      User.countDocuments({ followed_users: user._id }).lean().exec(),
     ]);
 
     // Return user and all counts as a single object
     const enrichedUser = {
-      ...user._doc,
+      ...user,
       postsCount,
       postLikesCount,
       postDislikesCount,
@@ -352,6 +352,7 @@ export const getUser = [
       commentDislikesCount,
       followersCount,
     };
+
     return res.json(enrichedUser);
   }),
 ];

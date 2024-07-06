@@ -1,4 +1,6 @@
 import Category from '../models/Category.js';
+import Post from '../models/Post.js';
+import User from '../models/User.js';
 
 import asyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
@@ -75,15 +77,25 @@ export const createCategory = [
 ];
 
 // @desc    Get single category
+// @desc    Get category posts and followers as well
 // @route   GET /categories/:slug
 export const getSingleCategory = asyncHandler(async (req, res, next) => {
   const slug = req.params.slug;
 
-  const category = await Category.findOne({ slug }).exec();
+  const category = await Category.findOne({ slug }).lean().exec();
 
   if (!category) {
     return res.status(404).json('Category not found');
   }
 
-  return res.json(category);
+  // Get the number of posts and followers of the category
+  const [categoryPosts, categoryFollowers] = await Promise.all([
+    Post.countDocuments({ category: category._id }).lean().exec(),
+    User.countDocuments({ followed_categories: category._id }).lean().exec(),
+  ]);
+
+  // Return category and both counts as a single object
+  const enrichedCategory = { ...category, categoryPosts, categoryFollowers };
+
+  return res.json(enrichedCategory);
 });
