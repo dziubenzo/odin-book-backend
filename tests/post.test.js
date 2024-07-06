@@ -222,7 +222,7 @@ describe('GET /posts', () => {
           .expect(200);
       });
 
-      it('should return a 400 and an error message if the category provided does not exist', async () => {
+      it('should return a 400 and an error message if the provided category does not exist', async () => {
         const madeUpCategory = 'funny-beavers';
 
         await request(app)
@@ -230,6 +230,34 @@ describe('GET /posts', () => {
           .auth(token, { type: 'bearer' })
           .expect('Content-Type', /json/)
           .expect(/invalid category/i)
+          .expect(400);
+      });
+    });
+
+    describe('with user query parameter', () => {
+      it('should return a 200 and an array of all posts posted by a given user', async () => {
+        await request(app)
+          .get(`/posts?user=${user1.username}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect((res) => {
+            const arrayOfPosts = res.body;
+            expect(arrayOfPosts.length).toBeGreaterThan(0);
+            for (let post of arrayOfPosts) {
+              expect(post.author._id).toBe(user1._id.toString());
+            }
+          })
+          .expect(200);
+      });
+
+      it('should return a 400 and an error message if the provided user does not exist', async () => {
+        const madeUpUser = 'beaversBite96';
+
+        await request(app)
+          .get(`/posts?user=${madeUpUser}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect(/invalid user/i)
           .expect(400);
       });
     });
