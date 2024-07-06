@@ -541,12 +541,19 @@ describe('GET /users/:username', () => {
           expect(res.body.bio).toBe(user2.bio);
           expect(res.body.avatar).toBe(user2.avatar);
           expect(res.body).toHaveProperty('postsCount');
+          expect(res.body.postsCount >= 0).toBeTruthy();
           expect(res.body).toHaveProperty('postLikesCount');
+          expect(res.body.postLikesCount >= 0).toBeTruthy();
           expect(res.body).toHaveProperty('postDislikesCount');
+          expect(res.body.postLikesCount >= 0).toBeTruthy();
           expect(res.body).toHaveProperty('commentsCount');
+          expect(res.body.postLikesCount >= 0).toBeTruthy();
           expect(res.body).toHaveProperty('commentLikesCount');
+          expect(res.body.postLikesCount >= 0).toBeTruthy();
           expect(res.body).toHaveProperty('commentDislikesCount');
+          expect(res.body.postLikesCount >= 0).toBeTruthy();
           expect(res.body).toHaveProperty('followersCount');
+          expect(res.body.postLikesCount >= 0).toBeTruthy();
         })
         .expect(200);
     });

@@ -89,13 +89,13 @@ export const getSingleCategory = asyncHandler(async (req, res, next) => {
   }
 
   // Get the number of posts and followers of the category
-  const [categoryPosts, categoryFollowers] = await Promise.all([
+  const [postsCount, followersCount] = await Promise.all([
     Post.countDocuments({ category: category._id }).lean().exec(),
     User.countDocuments({ followed_categories: category._id }).lean().exec(),
   ]);
 
   // Return category and both counts as a single object
-  const enrichedCategory = { ...category, categoryPosts, categoryFollowers };
+  const enrichedCategory = { ...category, postsCount, followersCount };
 
   return res.json(enrichedCategory);
 });

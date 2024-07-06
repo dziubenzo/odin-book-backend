@@ -147,7 +147,6 @@ export const post4 = {
 Comments
 */
 
-
 export const comment2 = {
   _id: idComment2,
   author: idUser1.toString(),

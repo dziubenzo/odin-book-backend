@@ -1,7 +1,8 @@
-import categoryRouter from '../routes/category.js';
 import Category from '../models/Category.js';
-import userRouter from '../routes/user.js';
 import User from '../models/User.js';
+import Post from '../models/Post.js';
+import categoryRouter from '../routes/category.js';
+import userRouter from '../routes/user.js';
 
 import request from 'supertest';
 import express from 'express';
@@ -233,7 +234,7 @@ describe('GET /categories/:slug', () => {
   });
 
   describe('category exists', () => {
-    it('should return a 200 and the requested category object', async () => {
+    it('should return a 200 and the requested category object with the count of category posts and followers', async () => {
       await request(app)
         .get(`/categories/${category1.slug}`)
         .auth(token, { type: 'bearer' })
@@ -242,6 +243,10 @@ describe('GET /categories/:slug', () => {
           expect(res.body).toHaveProperty('name', category1.name);
           expect(res.body).toHaveProperty('description', category1.description);
           expect(res.body).toHaveProperty('slug', category1.slug);
+          expect(res.body).toHaveProperty('postsCount');
+          expect(res.body.postsCount >= 0).toBeTruthy();
+          expect(res.body).toHaveProperty('followersCount');
+          expect(res.body.followersCount >= 0).toBeTruthy();
         })
         .expect(200);
     });
