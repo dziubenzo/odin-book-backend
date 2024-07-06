@@ -13,6 +13,7 @@ import {
   checkCategoryExistence,
   checkFilterQueryParameter,
   checkPostType,
+  checkUserExistence,
 } from '../config/middleware.js';
 import fetch from 'node-fetch';
 import { handlePostImageUpload } from '../config/cloudinary.js';
@@ -36,6 +37,11 @@ export const getAllPosts = [
     .trim()
     .custom(checkCategoryExistence)
     .withMessage('Invalid category query parameter'),
+  query('user')
+    .optional()
+    .trim()
+    .custom(checkUserExistence)
+    .withMessage('Invalid user query parameter'),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
@@ -49,9 +55,10 @@ export const getAllPosts = [
     const limit = req.query.limit;
     const filter = req.query.filter;
     const category = req.query.category;
+    const user = req.query.user;
     let query = {};
 
-    // Construct a query if the filter or category query parameter is provided
+    // Construct a query if the filter/category/user query parameter is provided
     if (filter) {
       const loggedInUser = req.user;
       switch (filter) {
@@ -73,6 +80,11 @@ export const getAllPosts = [
     if (category) {
       const categoryID = req.query.categoryID;
       query = { category: categoryID };
+    }
+
+    if (user) {
+      const userID = req.query.userID;
+      query = { author: userID };
     }
 
     const allPosts = await Post.find(query)

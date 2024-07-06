@@ -77,3 +77,18 @@ export const checkCategoryExistence = async (value, { req }) => {
   }
   return Promise.reject();
 };
+
+// Check if the user provided in the user query parameter exists
+// If they do, save the user ID for later use
+export const checkUserExistence = async (value, { req }) => {
+  const userExists = await User.findOne({
+    username: value,
+  })
+    .lean()
+    .exec();
+  if (userExists) {
+    req.query.userID = userExists._id;
+    return Promise.resolve();
+  }
+  return Promise.reject();
+};
