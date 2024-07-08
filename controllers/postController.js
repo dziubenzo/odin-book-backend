@@ -19,7 +19,7 @@ import fetch from 'node-fetch';
 import { handlePostImageUpload } from '../config/cloudinary.js';
 
 // @desc    Get all posts in descending order (newest first)
-// @desc    Accepts limit and filter query parameters
+// @desc    Accepts limit, skip and filter query parameters
 // @route   GET /posts
 export const getAllPosts = [
   query('limit')
@@ -27,6 +27,11 @@ export const getAllPosts = [
     .trim()
     .isInt()
     .withMessage('Limit query parameter must be an integer'),
+  query('skip')
+    .optional()
+    .trim()
+    .isInt()
+    .withMessage('Skip query parameter must be an integer'),
   query('filter')
     .optional()
     .trim()
@@ -53,6 +58,7 @@ export const getAllPosts = [
     }
 
     const limit = req.query.limit;
+    const skip = req.query.skip;
     const filter = req.query.filter;
     const category = req.query.category;
     const user = req.query.user;
@@ -93,6 +99,8 @@ export const getAllPosts = [
       .sort({ created_at: -1 })
       // Apply the limit if provided
       .limit(limit ?? limit)
+      // Apply the skip if provided
+      .skip(skip ?? skip)
       .exec();
 
     return res.json(allPosts);
