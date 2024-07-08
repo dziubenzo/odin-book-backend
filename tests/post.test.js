@@ -40,6 +40,8 @@ app.use('/posts', postRouter);
 app.use('/posts/:slug/comments', commentRouter);
 
 describe('GET /posts', () => {
+  const ALL_POSTS_LENGTH = 3;
+
   describe('no auth', () => {
     it('should return a 401', async () => {
       await request(app).get('/posts').expect(401);
@@ -118,6 +120,32 @@ describe('GET /posts', () => {
 
         await request(app)
           .get(`/posts?limit=${limit}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect(/must be an integer/i)
+          .expect(400);
+      });
+    });
+
+    describe('with skip query parameter', () => {
+      it('should return a 200 and an array of all post objects minus the skip query parameter', async () => {
+        const skip = 2;
+
+        await request(app)
+          .get(`/posts?skip=${skip}`)
+          .auth(token, { type: 'bearer' })
+          .expect('Content-Type', /json/)
+          .expect((res) => {
+            expect(res.body).toHaveLength(ALL_POSTS_LENGTH - skip);
+          })
+          .expect(200);
+      });
+
+      it('should return a 400 and an error message if the skip query parameter is not an integer', async () => {
+        const skip = 1.69;
+
+        await request(app)
+          .get(`/posts?skip=${skip}`)
           .auth(token, { type: 'bearer' })
           .expect('Content-Type', /json/)
           .expect(/must be an integer/i)
