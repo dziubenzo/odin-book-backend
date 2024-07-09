@@ -8,6 +8,7 @@ import { getFirstErrorMsg, defaultCategoryIcon } from '../config/helpers.js';
 import {
   checkFirstCharacter,
   checkCategoryNameAvailability,
+  checkForNew,
 } from '../config/middleware.js';
 import slugify from 'slugify';
 import { upload } from '../config/multer.js';
@@ -32,7 +33,9 @@ export const createCategory = [
     .custom(checkFirstCharacter)
     .withMessage('Category name cannot start with a number')
     .custom(checkCategoryNameAvailability)
-    .withMessage('Category already exists'),
+    .withMessage('Category already exists')
+    .custom(checkForNew)
+    .withMessage('Prohibited category name'),
   body('description')
     .trim()
     .isLength({ min: 3, max: 320 })

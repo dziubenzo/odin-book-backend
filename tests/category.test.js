@@ -192,6 +192,16 @@ describe('POST /categories', () => {
         .expect(400);
     });
 
+    it("should return a 400 and an error message if the name is 'new'", async () => {
+      await request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send({ ...category3, name: 'New' })
+        .expect(/prohibited/i)
+        .expect(400);
+    });
+
     it('should return a 400 and an error message if the description is too short', async () => {
       await request(app)
         .post('/categories')

@@ -92,3 +92,12 @@ export const checkUserExistence = async (value, { req }) => {
   }
   return Promise.reject();
 };
+
+// Make sure a new category cannot be named "new" so that it does not collide with the '/categories/new' route once created
+export const checkForNew = (value) => {
+  if (value.toLowerCase() === 'new') {
+    return false;
+  } else {
+    return true;
+  }
+};
