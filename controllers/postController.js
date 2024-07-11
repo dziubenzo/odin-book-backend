@@ -94,7 +94,7 @@ export const getAllPosts = [
     }
 
     const allPosts = await Post.find(query)
-      .populate({ path: 'author', select: 'username' })
+      .populate({ path: 'author', select: 'username avatar' })
       .populate({ path: 'category', select: 'name slug' })
       .sort({ created_at: -1 })
       // Apply the limit if provided
@@ -236,7 +236,7 @@ export const getSinglePost = asyncHandler(async (req, res, next) => {
   const slug = req.params.slug;
 
   const post = await Post.findOne({ slug })
-    .populate({ path: 'author', select: 'username' })
+    .populate({ path: 'author', select: 'username avatar' })
     .populate({ path: 'category', select: 'name slug' })
     .populate({
       path: 'comments',
