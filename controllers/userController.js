@@ -159,8 +159,8 @@ export const updateUser = [
   body('bio')
     .trim()
     .optional()
-    .isLength({ max: 160 })
-    .withMessage('Bio cannot exceed 160 characters'),
+    .isLength({ max: 320 })
+    .withMessage('Bio cannot exceed 320 characters'),
   body('avatar').optional().isURL().withMessage('Avatar must be an URL'),
 
   asyncHandler(async (req, res, next) => {

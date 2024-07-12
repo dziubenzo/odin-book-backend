@@ -63,7 +63,7 @@ export const validCredentials = {
 };
 
 export const longBio =
-  'Lorem ipsum dolor sit amet. Non numquam deserunt cum deserunt voluptatem sit iure eaque eos consectetur voluptatem aut similique corrupti et libero quos sed corrupti maxime.';
+  'Lorem ipsum dolor sit amet. Non numquam deserunt cum deserunt voluptatem sit iure eaque eos consectetur voluptatem aut similique corrupti et libero quos sed corrupti maxime. I am too long to achieve what I hope for. I am too long to achieve what I hope for. I am too long to achieve what I hope for. I am too long to achieve what I hope for. I am too long to achieve what I hope for.';
 
 /* 
 Categories

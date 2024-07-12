@@ -22,7 +22,7 @@ const UserSchema = new Schema({
   },
   bio: {
     type: String,
-    maxLength: 160,
+    maxLength: 320,
   },
   followed_users: [
     {
