@@ -14,10 +14,10 @@ import slugify from 'slugify';
 import { upload } from '../config/multer.js';
 import { handleUpload } from '../config/cloudinary.js';
 
-// @desc    Get all categories
+// @desc    Get all categories (in ascending order)
 // @route   GET /categories
 export const getAllCategories = asyncHandler(async (req, res, next) => {
-  const allCategories = await Category.find({}).exec();
+  const allCategories = await Category.find({}).sort({ name: 1 }).exec();
 
   return res.json(allCategories);
 });

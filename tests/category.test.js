@@ -1,6 +1,5 @@
 import Category from '../models/Category.js';
 import User from '../models/User.js';
-import Post from '../models/Post.js';
 import categoryRouter from '../routes/category.js';
 import userRouter from '../routes/user.js';
 
@@ -112,13 +111,10 @@ describe('POST /categories', () => {
 
     it('should assign a default category icon if an icon is not provided', async () => {
       await request(app)
-        .get('/categories')
+        .get(`/categories/${category3.slug}`)
         .auth(token, { type: 'bearer' })
         .expect((res) => {
-          expect(res.body[res.body.length - 1]).toHaveProperty(
-            'icon',
-            defaultCategoryIcon
-          );
+          expect(res.body).toHaveProperty('icon', defaultCategoryIcon);
         })
         .expect(200);
     });
@@ -136,13 +132,10 @@ describe('POST /categories', () => {
 
     it('should assign the uploaded category icon to the created category', async () => {
       await request(app)
-        .get('/categories')
+        .get(`/categories/category-4`)
         .auth(token, { type: 'bearer' })
         .expect((res) => {
-          expect(res.body[res.body.length - 1]).toHaveProperty(
-            'icon',
-            'cool_cat_category_icon.png'
-          );
+          expect(res.body).toHaveProperty('icon', 'cool_cat_category_icon.png');
         })
         .expect(200);
     });
