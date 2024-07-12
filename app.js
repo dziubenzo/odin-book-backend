@@ -17,10 +17,16 @@ import categoryRouter from './routes/category.js';
 import postRouter from './routes/post.js';
 import commentRouter from './routes/comment.js';
 
+// Frontend URL
+const FRONTEND_URL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://dziubenzo-odin-book.netlify.app'
+    : 'http://localhost:5173';
+
 // CORS options - allowed site(s)
 // No '/' at the end
 const corsOptions = {
-  origin: '*',
+  origin: FRONTEND_URL,
 };
 
 const app = express();
