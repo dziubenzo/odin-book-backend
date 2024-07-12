@@ -36,6 +36,7 @@
     "slugify": "^1.6.6"
   },
   "devDependencies": {
+    "@flydotio/dockerfile": "^0.5.7",
     "mongodb-memory-server": "^9.2.0",
     "supertest": "^7.0.0",
     "vitest": "^1.6.0"

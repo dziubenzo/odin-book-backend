@@ -38,11 +38,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(compression());
 app.use(helmet());
-/* 
-ENABLE LATER
 app.use(limiter);
-ENABLE LATER
-*/
 
 // JWT authentication
 passport.use(jwtStrategy);
