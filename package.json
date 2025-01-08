@@ -16,6 +16,11 @@
   "author": "dziubenzo",
   "license": "ISC",
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/passport": "^1.0.17",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.2.0",
     "compression": "^1.7.4",
@@ -37,8 +42,13 @@
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.5.7",
+    "@types/node": "^22.10.5",
+    "@types/passport-jwt": "^4.0.1",
     "mongodb-memory-server": "^9.2.0",
+    "pkgroll": "^2.6.1",
     "supertest": "^7.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
     "vitest": "^1.6.0"
   }
 }
