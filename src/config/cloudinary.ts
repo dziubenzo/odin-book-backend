@@ -9,7 +9,7 @@ cloudinary.config({
 });
 
 // Transform received avatar/icon and upload it to Cloudinary
-export async function handleUpload(file, path) {
+export async function handleUpload(file: Express.Multer.File, path: string) {
   const b64 = Buffer.from(file.buffer).toString('base64');
   const dataURI = 'data:' + file.mimetype + ';base64,' + b64;
 

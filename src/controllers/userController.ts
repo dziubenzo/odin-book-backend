@@ -1,33 +1,32 @@
-import User from '../models/User.js';
-import Category from '../models/Category.js';
-import Post from '../models/Post.js';
-import Comment from '../models/Comment.js';
-
+import bcrypt from 'bcryptjs';
+import type { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
-import bcrypt from 'bcryptjs';
-import {
-  checkPasswordsEquality,
-  checkFirstCharacter,
-  checkUsernameAvailability,
-  checkAuth,
-} from '../config/middleware.js';
-import { getFirstErrorMsg, getRandomAvatar } from '../config/helpers.js';
-import { upload } from '../config/multer.js';
-import { handleUpload } from '../config/cloudinary.js';
-
 import jwt from 'jsonwebtoken';
+import { handleUpload } from '../config/cloudinary';
+import { getFirstErrorMsg, getRandomAvatar } from '../config/helpers';
+import {
+  checkFirstCharacter,
+  checkPasswordsEquality,
+  checkUsernameAvailability,
+} from '../config/middleware';
+import { upload } from '../config/multer';
+import { checkAuth } from '../config/passport';
+import Category from '../models/Category';
+import Comment from '../models/Comment';
+import Post from '../models/Post';
+import User from '../models/User';
 
 // @desc    Get all users (in ascending order)
 // @route   GET /users
 export const getAllUsers = [
   checkAuth,
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const allUsers = await User.find({}, '-password')
       .sort({ username: 1 })
+      .lean()
       .exec();
-
-    return res.json(allUsers);
+    res.json(allUsers);
   }),
 ];
 
@@ -55,13 +54,14 @@ export const createUser = [
     .custom(checkPasswordsEquality)
     .withMessage('Passwords do not match'),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
     const username = req.body.username;
@@ -71,9 +71,10 @@ export const createUser = [
 
     // Check for password-hashing errors
     if (!hashedPassword) {
-      return res
+      res
         .status(500)
         .json('Something went wrong while creating a user. Please try again.');
+      return;
     }
 
     // Create new user with a random default avatar
@@ -87,7 +88,7 @@ export const createUser = [
       followed_categories: [],
     }).save();
 
-    return res.json('User created successfully!');
+    res.json('User created successfully!');
   }),
 ];
 
@@ -104,24 +105,26 @@ export const loginUser = [
     .isLength({ min: 3, max: 16 })
     .withMessage('Password must contain between 3 and 16 characters'),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
     const username = req.body.username;
     const password = req.body.password;
 
     // Get user from the DB
-    const user = await User.findOne({ username }).exec();
+    const user = await User.findOne({ username }).lean().exec();
 
     // Return error message if no user found
     if (!user) {
-      return res.status(401).json('Invalid username and/or password');
+      res.status(401).json('Invalid username and/or password');
+      return;
     }
 
     // Compare passwords
@@ -129,16 +132,17 @@ export const loginUser = [
 
     // Return error message if passwords do not match
     if (!passwordsMatch) {
-      return res.status(401).json('Invalid username and/or password');
+      res.status(401).json('Invalid username and/or password');
+      return;
     }
 
     // Create token valid for 3 days if login credentials are valid
     // Use user's ID as payload
     const options = { expiresIn: '3 days' };
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, options);
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, options);
 
     // Return token
-    return res.json(token);
+    res.json(token);
   }),
 ];
 
@@ -146,8 +150,8 @@ export const loginUser = [
 // @route   POST /users/auth
 export const authUser = [
   checkAuth,
-  asyncHandler(async (req, res, next) => {
-    return res.json(req.user);
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(req.user);
   }),
 ];
 
@@ -163,17 +167,18 @@ export const updateUser = [
     .withMessage('Bio cannot exceed 320 characters'),
   body('avatar').optional().isURL().withMessage('Avatar must be an URL'),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
     const username = req.params.username;
-    const bio = req.body.bio || req.user.bio;
+    const bio = req.user?.bio ?? req.body.bio;
 
     // Transform and upload avatar to Cloudinary if image sent with request
     if (req.file) {
@@ -182,21 +187,32 @@ export const updateUser = [
         User.findOne({ username }, '-password').exec(),
       ]);
 
+      if (!user) {
+        res.status(400).json('Error while updating the user. Please try again');
+        return;
+      }
+
       user.bio = bio;
       user.avatar = cloudinaryRes.secure_url;
       await user.save();
 
-      return res.json(user);
+      res.json(user);
+      return;
     }
 
-    const defaultAvatarURL = req.body.avatar || req.user.avatar;
+    const defaultAvatarURL = req.user?.avatar ?? req.body.avatar;
     const user = await User.findOne({ username }, '-password').exec();
+
+    if (!user) {
+      res.status(400).json('Error while updating the user. Please try again');
+      return;
+    }
 
     user.bio = bio;
     user.avatar = defaultAvatarURL;
     await user.save();
 
-    return res.json(user);
+    res.json(user);
   }),
 ];
 
@@ -209,13 +225,14 @@ export const updateFollowedCategories = [
     .isMongoId()
     .withMessage('Category must be a valid MongoDB ID'),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
     const categoryID = req.body.category_id;
@@ -227,10 +244,11 @@ export const updateFollowedCategories = [
       User.findOne({ username }, '-password').exec(),
     ]);
 
-    if (!categoryExists) {
-      return res
+    if (!categoryExists || !user) {
+      res
         .status(400)
         .json('Error while following/unfollowing a category. Please try again');
+      return;
     }
 
     // Follow or unfollow the category
@@ -240,13 +258,14 @@ export const updateFollowedCategories = [
       user.followed_categories.splice(index, 1);
       await user.save();
 
-      return res.json(user);
+      res.json(user);
+      return;
     }
 
     user.followed_categories.push(categoryID);
     await user.save();
 
-    return res.json(user);
+    res.json(user);
   }),
 ];
 
@@ -259,21 +278,23 @@ export const updateFollowedUsers = [
     .isMongoId()
     .withMessage('User must be a valid MongoDB ID'),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
     const userID = req.body.user_id;
     const username = req.params.username;
 
     // Make sure the logged in user cannot follow themselves
-    if (userID === req.user._id.toString()) {
-      return res.status(400).json('You cannot follow yourself');
+    if (userID === req.user?._id.toString()) {
+      res.status(400).json('You cannot follow yourself');
+      return;
     }
 
     // Make sure the user exists and retrieve user
@@ -282,10 +303,11 @@ export const updateFollowedUsers = [
       User.findOne({ username }, '-password').exec(),
     ]);
 
-    if (!userExists) {
-      return res
+    if (!userExists || !user) {
+      res
         .status(400)
         .json('Error while following/unfollowing a user. Please try again');
+      return;
     }
 
     // Follow or unfollow the user
@@ -295,13 +317,14 @@ export const updateFollowedUsers = [
       user.followed_users.splice(index, 1);
       await user.save();
 
-      return res.json(user);
+      res.json(user);
+      return;
     }
 
     user.followed_users.push(userID);
     await user.save();
 
-    return res.json(user);
+    res.json(user);
   }),
 ];
 
@@ -310,16 +333,15 @@ export const updateFollowedUsers = [
 // @route   GET /users/:username
 export const getUser = [
   checkAuth,
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const username = req.params.username;
 
-    const user = await User.findOne({ username }, '-password').lean().exec();
+    const user = await User.findOne({ username }, '-password').exec();
 
     // Make sure the user exists
     if (!user) {
-      return res
-        .status(400)
-        .json('Error while retrieving a user. Please try again');
+      res.status(400).json('Error while retrieving a user. Please try again');
+      return;
     }
 
     // Get the number of posts, post likes, post dislikes, comments, comment likes, comment dislikes and followers of the user
@@ -353,6 +375,6 @@ export const getUser = [
       followersCount,
     };
 
-    return res.json(enrichedUser);
+    res.json(enrichedUser);
   }),
 ];
