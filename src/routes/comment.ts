@@ -1,11 +1,10 @@
 import { Router } from 'express';
-
+import { checkAuth } from '../config/passport';
 import {
   createComment,
-  likeComment,
   dislikeComment,
+  likeComment,
 } from '../controllers/commentController.js';
-import { checkAuth } from '../config/middleware.js';
 
 const router = Router({ mergeParams: true });
 

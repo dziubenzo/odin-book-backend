@@ -1,13 +1,12 @@
 import { Router } from 'express';
-
+import { checkAuth } from '../config/passport';
 import {
-  getAllPosts,
   createPost,
+  dislikePost,
+  getAllPosts,
   getSinglePost,
   likePost,
-  dislikePost,
 } from '../controllers/postController.js';
-import { checkAuth } from '../config/middleware.js';
 
 const router = Router();
 

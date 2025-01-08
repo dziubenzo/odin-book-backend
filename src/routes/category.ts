@@ -1,11 +1,10 @@
 import { Router } from 'express';
-
+import { checkAuth } from '../config/passport';
 import {
   createCategory,
   getAllCategories,
   getSingleCategory,
 } from '../controllers/categoryController.js';
-import { checkAuth } from '../config/middleware.js';
 
 const router = Router();
 
