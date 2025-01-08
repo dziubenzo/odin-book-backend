@@ -4,7 +4,7 @@ import {
   createCategory,
   getAllCategories,
   getSingleCategory,
-} from '../controllers/categoryController.js';
+} from '../controllers/categoryController';
 
 const router = Router();
 

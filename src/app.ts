@@ -11,11 +11,11 @@ import './config/mongoDB';
 import { jwtStrategy } from './config/passport';
 
 // Route imports
-import categoryRouter from './routes/category.js';
-import commentRouter from './routes/comment.js';
-import indexRouter from './routes/index.js';
-import postRouter from './routes/post.js';
-import userRouter from './routes/user.js';
+import categoryRouter from './routes/category';
+import commentRouter from './routes/comment';
+import indexRouter from './routes/index';
+import postRouter from './routes/post';
+import userRouter from './routes/user';
 
 // Frontend URL
 const FRONTEND_URL = isProduction()

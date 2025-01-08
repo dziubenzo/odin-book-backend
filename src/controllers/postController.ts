@@ -1,22 +1,22 @@
-import Post from '../models/Post.js';
-import User from '../models/User.js';
-import Category from '../models/Category.js';
-
+import crypto from 'crypto';
+import type { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, query, validationResult } from 'express-validator';
-import { allowedImageFormats, getFirstErrorMsg } from '../config/helpers.js';
-import slugify from 'slugify';
-import crypto from 'crypto';
+import fetch from 'node-fetch';
 import sanitizeHtml from 'sanitize-html';
-import { upload } from '../config/multer.js';
+import slugify from 'slugify';
+import { handlePostImageUpload } from '../config/cloudinary';
+import { allowedImageFormats, getFirstErrorMsg } from '../config/helpers';
 import {
   checkCategoryExistence,
   checkFilterQueryParameter,
   checkPostType,
   checkUserExistence,
-} from '../config/middleware.js';
-import fetch from 'node-fetch';
-import { handlePostImageUpload } from '../config/cloudinary.js';
+} from '../config/middleware';
+import { upload } from '../config/multer';
+import Category from '../models/Category';
+import Post from '../models/Post';
+import User from '../models/User';
 
 // @desc    Get all posts in descending order (newest first)
 // @desc    Accepts limit, skip and filter query parameters
@@ -48,17 +48,18 @@ export const getAllPosts = [
     .custom(checkUserExistence)
     .withMessage('Invalid user query parameter'),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
-    const limit = req.query.limit;
-    const skip = req.query.skip;
+    const limit = (req.query.limit as string) || undefined;
+    const skip = (req.query.skip as string) || undefined;
     const filter = req.query.filter;
     const category = req.query.category;
     const user = req.query.user;
@@ -67,6 +68,10 @@ export const getAllPosts = [
     // Construct a query if the filter/category/user query parameter is provided
     if (filter) {
       const loggedInUser = req.user;
+      if (!loggedInUser) {
+        res.status(400).json('Error while retrieving posts. Please try again');
+        return;
+      }
       switch (filter) {
         case 'categories':
           query = { category: loggedInUser.followed_categories };
@@ -98,12 +103,12 @@ export const getAllPosts = [
       .populate({ path: 'category', select: 'name slug' })
       .sort({ created_at: -1 })
       // Apply the limit if provided
-      .limit(limit ?? limit)
+      .limit(limit ? parseInt(limit) : Infinity)
       // Apply the skip if provided
-      .skip(skip ?? skip)
+      .skip(skip ? parseInt(skip) : 0)
       .exec();
 
-    return res.json(allPosts);
+    res.json(allPosts);
   }),
 ];
 
@@ -133,13 +138,14 @@ export const createPost = [
     .isMongoId()
     .withMessage('Category field must be a valid MongoDB ID'),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
     const type = req.query.type;
@@ -162,16 +168,16 @@ export const createPost = [
 
     // Return an error message if either does not exist
     if (!authorExists || !categoryExists) {
-      return res
-        .status(400)
-        .json('Error while creating a post. Please try again');
+      res.status(400).json('Error while creating a post. Please try again');
+      return;
     }
 
     // Handle image post (both URL and file)
     if (type === 'image' && req.file) {
       // Make sure only supported image formats are accepted
       if (!allowedImageFormats.includes(req.file.mimetype)) {
-        return res.status(400).json('Unsupported file format');
+        res.status(400).json('Unsupported file format');
+        return;
       }
       const { secure_url } = await handlePostImageUpload(
         req.file.buffer,
@@ -182,13 +188,13 @@ export const createPost = [
     } else if (type === 'image') {
       const response = await fetch(req.body.content);
       if (!response.ok) {
-        return res
-          .status(400)
-          .json('Error while creating a post. Please try again');
+        res.status(400).json('Error while creating a post. Please try again');
+        return;
       }
       const contentType = response.headers.get('content-type');
-      if (!allowedImageFormats.includes(contentType)) {
-        return res.status(400).json('Unsupported file format');
+      if (!contentType || !allowedImageFormats.includes(contentType)) {
+        res.status(400).json('Unsupported file format');
+        return;
       }
       const resBuffer = await response.arrayBuffer();
       const { secure_url } = await handlePostImageUpload(
@@ -202,9 +208,8 @@ export const createPost = [
     if (type === 'video') {
       // Make sure the link is of a YT embed type
       if (!req.body.content.startsWith('https://www.youtube.com/embed/')) {
-        return res
-          .status(400)
-          .json('Error while creating a post. Please try again');
+        res.status(400).json('Error while creating a post. Please try again');
+        return;
       }
       content = `<iframe class="yt-video-player" src="${req.body.content}" title="YouTube video player for the ${title} post" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""/>`;
     }
@@ -226,32 +231,36 @@ export const createPost = [
     }).save();
 
     // Return new post
-    return res.json(newPost);
+    res.json(newPost);
   }),
 ];
 
 // @desc    Get single post
 // @route   GET /posts/:slug
-export const getSinglePost = asyncHandler(async (req, res, next) => {
-  const slug = req.params.slug;
+export const getSinglePost = asyncHandler(
+  async (req: Request, res: Response) => {
+    const slug = req.params.slug;
 
-  const post = await Post.findOne({ slug })
-    .populate({ path: 'author', select: 'username avatar' })
-    .populate({ path: 'category', select: 'name slug' })
-    .populate({
-      path: 'comments',
-      populate: { path: 'author', select: 'username avatar' },
-      // Sort comments in descending order (newest first)
-      options: { sort: { created_at: -1 } },
-    })
-    .exec();
+    const post = await Post.findOne({ slug })
+      .populate({ path: 'author', select: 'username avatar' })
+      .populate({ path: 'category', select: 'name slug' })
+      .populate({
+        path: 'comments',
+        populate: { path: 'author', select: 'username avatar' },
+        // Sort comments in descending order (newest first)
+        options: { sort: { created_at: -1 } },
+      })
+      .lean()
+      .exec();
 
-  if (!post) {
-    return res.status(404).json('Post not found');
+    if (!post) {
+      res.status(404).json('Post not found');
+      return;
+    }
+
+    res.json(post);
   }
-
-  return res.json(post);
-});
+);
 
 // @desc    Like post
 // @route   PUT /posts/:slug/like
@@ -261,28 +270,29 @@ export const likePost = [
     .isMongoId()
     .withMessage('User field must be a valid MongoDB ID'),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
     const slug = req.params.slug;
     const user = req.body.user;
 
-    // Make sure the user exists
-    const userExists = await User.findById(user).exec();
+    // Make sure the user and post exist
+    const [userExists, post] = await Promise.all([
+      User.findById(user).exec(),
+      Post.findOne({ slug }).exec(),
+    ]);
 
-    if (!userExists) {
-      return res
-        .status(400)
-        .json('Error while liking a post. Please try again');
+    if (!userExists || !post) {
+      res.status(400).json('Error while liking a post. Please try again');
+      return;
     }
-
-    const post = await Post.findOne({ slug });
 
     // Only remove like if the post is already liked by the user
     if (post.likes.includes(user)) {
@@ -290,7 +300,8 @@ export const likePost = [
       post.likes.splice(index, 1);
       await post.save();
 
-      return res.json('Post unliked successfully!');
+      res.json('Post unliked successfully!');
+      return;
     }
 
     // Otherwise remove dislike from the post if it exists and push like to the post
@@ -301,7 +312,7 @@ export const likePost = [
     post.likes.push(user);
     await post.save();
 
-    return res.json('Post liked successfully!');
+    res.json('Post liked successfully!');
   }),
 ];
 
@@ -313,29 +324,29 @@ export const dislikePost = [
     .isMongoId()
     .withMessage('User field must be a valid MongoDB ID'),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
     const slug = req.params.slug;
     const user = req.body.user;
 
-    // Make sure the user exists
-    const userExists = await User.findById(user).exec();
+    // Make sure the user and post exist
+    const [userExists, post] = await Promise.all([
+      User.findById(user).exec(),
+      Post.findOne({ slug }).exec(),
+    ]);
 
-    if (!userExists) {
-      return res
-        .status(400)
-        .json('Error while disliking a post. Please try again');
+    if (!userExists || !post) {
+      res.status(400).json('Error while disliking a post. Please try again');
+      return;
     }
-
-    // Check if the post is already disliked by the user
-    const post = await Post.findOne({ slug });
 
     // Only remove dislike if the post is already disliked by the user
     if (post.dislikes.includes(user)) {
@@ -343,7 +354,8 @@ export const dislikePost = [
       post.dislikes.splice(index, 1);
       await post.save();
 
-      return res.json('Post undisliked successfully!');
+      res.json('Post undisliked successfully!');
+      return;
     }
 
     // Otherwise remove like from the post if it exists and push dislike to the post
@@ -354,6 +366,6 @@ export const dislikePost = [
     post.dislikes.push(user);
     await post.save();
 
-    return res.json('Post disliked successfully!');
+    res.json('Post disliked successfully!');
   }),
 ];

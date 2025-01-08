@@ -4,7 +4,7 @@ import {
   createComment,
   dislikeComment,
   likeComment,
-} from '../controllers/commentController.js';
+} from '../controllers/commentController';
 
 const router = Router({ mergeParams: true });
 

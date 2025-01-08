@@ -6,7 +6,7 @@ import {
   getAllPosts,
   getSinglePost,
   likePost,
-} from '../controllers/postController.js';
+} from '../controllers/postController';
 
 const router = Router();
 

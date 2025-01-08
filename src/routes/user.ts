@@ -8,7 +8,7 @@ import {
   updateFollowedCategories,
   updateFollowedUsers,
   updateUser,
-} from '../controllers/userController.js';
+} from '../controllers/userController';
 
 const router = Router();
 

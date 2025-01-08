@@ -1,26 +1,30 @@
-import Category from '../models/Category.js';
-import Post from '../models/Post.js';
-import User from '../models/User.js';
-
+import type { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
-import { getFirstErrorMsg, defaultCategoryIcon } from '../config/helpers.js';
-import {
-  checkFirstCharacter,
-  checkCategoryNameAvailability,
-  checkForNew,
-} from '../config/middleware.js';
 import slugify from 'slugify';
-import { upload } from '../config/multer.js';
-import { handleUpload } from '../config/cloudinary.js';
+import { handleUpload } from '../config/cloudinary';
+import { defaultCategoryIcon, getFirstErrorMsg } from '../config/helpers';
+import {
+  checkCategoryNameAvailability,
+  checkFirstCharacter,
+  checkForNew,
+} from '../config/middleware';
+import { upload } from '../config/multer';
+import Category from '../models/Category';
+import Post from '../models/Post';
+import User from '../models/User';
 
 // @desc    Get all categories (in ascending order)
 // @route   GET /categories
-export const getAllCategories = asyncHandler(async (req, res, next) => {
-  const allCategories = await Category.find({}).sort({ name: 1 }).exec();
-
-  return res.json(allCategories);
-});
+export const getAllCategories = asyncHandler(
+  async (req: Request, res: Response) => {
+    const allCategories = await Category.find({})
+      .sort({ name: 1 })
+      .lean()
+      .exec();
+    res.json(allCategories);
+  }
+);
 
 // @desc    Create category
 // @route   POST /categories
@@ -43,13 +47,14 @@ export const createCategory = [
       'Category description must contain between 3 and 320 characters'
     ),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // Return the first validation error message if there are any errors
       const firstErrorMsg = getFirstErrorMsg(errors);
-      return res.status(400).json(firstErrorMsg);
+      res.status(400).json(firstErrorMsg);
+      return;
     }
 
     const name = req.body.name;
@@ -75,30 +80,33 @@ export const createCategory = [
       slug: slugify(name, { lower: true }),
     }).save();
 
-    return res.json('Category created successfully!');
+    res.json('Category created successfully!');
   }),
 ];
 
 // @desc    Get single category
 // @desc    Get category posts and followers as well
 // @route   GET /categories/:slug
-export const getSingleCategory = asyncHandler(async (req, res, next) => {
-  const slug = req.params.slug;
+export const getSingleCategory = asyncHandler(
+  async (req: Request, res: Response) => {
+    const slug = req.params.slug;
 
-  const category = await Category.findOne({ slug }).lean().exec();
+    const category = await Category.findOne({ slug }).lean().exec();
 
-  if (!category) {
-    return res.status(404).json('Category not found');
+    if (!category) {
+      res.status(404).json('Category not found');
+      return;
+    }
+
+    // Get the number of posts and followers of the category
+    const [postsCount, followersCount] = await Promise.all([
+      Post.countDocuments({ category: category._id }).lean().exec(),
+      User.countDocuments({ followed_categories: category._id }).lean().exec(),
+    ]);
+
+    // Return category and both counts as a single object
+    const enrichedCategory = { ...category, postsCount, followersCount };
+
+    res.json(enrichedCategory);
   }
-
-  // Get the number of posts and followers of the category
-  const [postsCount, followersCount] = await Promise.all([
-    Post.countDocuments({ category: category._id }).lean().exec(),
-    User.countDocuments({ followed_categories: category._id }).lean().exec(),
-  ]);
-
-  // Return category and both counts as a single object
-  const enrichedCategory = { ...category, postsCount, followersCount };
-
-  return res.json(enrichedCategory);
-});
+);

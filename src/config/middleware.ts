@@ -1,8 +1,8 @@
 import type { Meta } from 'express-validator';
 import slugify from 'slugify';
-import Category from '../models/Category.js';
-import User from '../models/User.js';
-import { allowedFilterValues, allowedPostTypes } from './helpers.js';
+import Category from '../models/Category';
+import User from '../models/User';
+import { allowedFilterValues, allowedPostTypes } from './helpers';
 
 // Check if the username provided is available (case-insensitive)
 export const checkUsernameAvailability = async (value: string) => {

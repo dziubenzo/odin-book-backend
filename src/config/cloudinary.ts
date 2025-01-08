@@ -22,7 +22,10 @@ export async function handleUpload(file: Express.Multer.File, path: string) {
 }
 
 // Transform received post image and upload it to Cloudinary
-export async function handlePostImageUpload(buffer, mimetype) {
+export async function handlePostImageUpload(
+  buffer: Express.Multer.File['buffer'] | ArrayBuffer,
+  mimetype: Express.Multer.File['mimetype']
+) {
   const b64 = Buffer.from(buffer).toString('base64');
   const dataURI = 'data:' + mimetype + ';base64,' + b64;
 

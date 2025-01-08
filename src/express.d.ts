@@ -7,6 +7,8 @@ declare global {
       _id?: ObjectId;
       bio?: string;
       avatar?: string;
+      followed_users?: ObjectId[];
+      followed_categories?: ObjectId[];
     }
   }
 }
