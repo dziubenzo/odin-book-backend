@@ -1,5 +1,12 @@
+import { Result, type ValidationError } from "express-validator";
+
+// Check for production environment
+export const isProduction = () => {
+  return process.env.NODE_ENV === 'production';
+};
+
 // Get error message of the first validation error
-export const getFirstErrorMsg = (errors) => {
+export const getFirstErrorMsg = (errors: Result<ValidationError>) => {
   return errors.array({ onlyFirstError: true })[0].msg;
 };
 

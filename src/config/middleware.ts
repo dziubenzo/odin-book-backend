@@ -1,14 +1,13 @@
-import User from '../models/User.js';
-import Category from '../models/Category.js';
-
-import passport from 'passport';
+import type { Meta } from 'express-validator';
 import slugify from 'slugify';
+import Category from '../models/Category.js';
+import User from '../models/User.js';
 import { allowedFilterValues, allowedPostTypes } from './helpers.js';
 
 // Check if the username provided is available (case-insensitive)
-export const checkUsernameAvailability = async (value) => {
+export const checkUsernameAvailability = async (value: string) => {
   const usernameTaken = await User.exists({
-    username: { $regex: value, $options: 'i' },
+    username: { $regex: new RegExp(`^${value}$`), $options: 'i' },
   })
     .lean()
     .exec();
@@ -19,18 +18,19 @@ export const checkUsernameAvailability = async (value) => {
 };
 
 // Check if the username/category name does not start with a number
-export const checkFirstCharacter = (value) => {
+export const checkFirstCharacter = (value: string) => {
   const firstCharacter = value[0];
   return !(firstCharacter >= '0' && firstCharacter <= '9');
 };
 
 // Check if passwords match
-export const checkPasswordsEquality = (value, { req }) => {
+export const checkPasswordsEquality = (value: string, meta: Meta) => {
+  const req = meta.req;
   return value === req.body.password;
 };
 
 // Check if the category name provided is available based on potential slug equality (to ensure slug and, hence, name uniqueness)
-export const checkCategoryNameAvailability = async (value) => {
+export const checkCategoryNameAvailability = async (value: string) => {
   const categoryFound = await Category.findOne({
     slug: slugify(value, { lower: true }),
   })
@@ -42,37 +42,27 @@ export const checkCategoryNameAvailability = async (value) => {
   return Promise.resolve();
 };
 
-// Check if user is authenticated
-export const checkAuth = passport.authenticate('jwt', { session: false });
-
 // Check if the post type query parameter is one of the three allowed types
-export const checkPostType = (value) => {
-  if (allowedPostTypes.includes(value)) {
-    return true;
-  } else {
-    return false;
-  }
+export const checkPostType = (value: string) => {
+  return allowedPostTypes.includes(value) ? true : false;
 };
 
 // Check if the filter query parameter is one of the four allowed types
-export const checkFilterQueryParameter = (value) => {
-  if (allowedFilterValues.includes(value)) {
-    return true;
-  } else {
-    return false;
-  }
+export const checkFilterQueryParameter = (value: string) => {
+  return allowedFilterValues.includes(value) ? true : false;
 };
 
 // Check if the category provided in the category query parameter exists
 // If it does, save the category ID for later use
-export const checkCategoryExistence = async (value, { req }) => {
+export const checkCategoryExistence = async (value: string, meta: Meta) => {
   const categoryExists = await Category.findOne({
     slug: value,
   })
     .lean()
     .exec();
   if (categoryExists) {
-    req.query.categoryID = categoryExists._id;
+    const req = meta.req;
+    req.query!.categoryID = categoryExists._id;
     return Promise.resolve();
   }
   return Promise.reject();
@@ -80,24 +70,21 @@ export const checkCategoryExistence = async (value, { req }) => {
 
 // Check if the user provided in the user query parameter exists
 // If they do, save the user ID for later use
-export const checkUserExistence = async (value, { req }) => {
+export const checkUserExistence = async (value: string, meta: Meta) => {
   const userExists = await User.findOne({
     username: value,
   })
     .lean()
     .exec();
   if (userExists) {
-    req.query.userID = userExists._id;
+    const req = meta.req;
+    req.query!.userID = userExists._id;
     return Promise.resolve();
   }
   return Promise.reject();
 };
 
 // Make sure a new category cannot be named "new" so that it does not collide with the '/categories/new' route once created
-export const checkForNew = (value) => {
-  if (value.toLowerCase() === 'new') {
-    return false;
-  } else {
-    return true;
-  }
+export const checkForNew = (value: string) => {
+  return value.toLowerCase() === 'new' ? true : false;
 };

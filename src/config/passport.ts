@@ -1,11 +1,14 @@
+import passport from 'passport';
+import {
+  ExtractJwt,
+  Strategy as JwtStrategy,
+  type StrategyOptionsWithoutRequest,
+} from 'passport-jwt';
 import User from '../models/User.js';
 
-import { Strategy as JwtStrategy } from 'passport-jwt';
-import { ExtractJwt } from 'passport-jwt';
-
-const options = {
+const options: StrategyOptionsWithoutRequest = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.JWT_SECRET,
+  secretOrKey: process.env.JWT_SECRET!,
 };
 
 export const jwtStrategy = new JwtStrategy(options, async (payload, done) => {
@@ -17,3 +20,6 @@ export const jwtStrategy = new JwtStrategy(options, async (payload, done) => {
   }
   return done(null, false);
 });
+
+// Check if user is authenticated
+export const checkAuth = passport.authenticate('jwt', { session: false });
