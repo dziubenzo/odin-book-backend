@@ -19,7 +19,7 @@ import userRouter from './routes/user';
 
 // Frontend URL
 const FRONTEND_URL = isProduction()
-  ? 'https://dziubenzo-messaging-app.netlify.app'
+  ? 'https://dziubenzo-odin-book.netlify.app'
   : ['http://localhost:5173', 'http://192.168.0.13:5173'];
 
 // CORS options - allowed site(s)
