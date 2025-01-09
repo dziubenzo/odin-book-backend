@@ -178,7 +178,7 @@ export const updateUser = [
     }
 
     const username = req.params.username;
-    const bio = req.user?.bio ?? req.body.bio;
+    const bio = req.body.bio ?? req.user?.bio;
 
     // Transform and upload avatar to Cloudinary if image sent with request
     if (req.file) {
@@ -200,7 +200,7 @@ export const updateUser = [
       return;
     }
 
-    const defaultAvatarURL = req.user?.avatar ?? req.body.avatar;
+    const defaultAvatarURL = req.body.avatar ?? req.user?.avatar;
     const user = await User.findOne({ username }, '-password').exec();
 
     if (!user) {
@@ -336,7 +336,7 @@ export const getUser = [
   asyncHandler(async (req: Request, res: Response) => {
     const username = req.params.username;
 
-    const user = await User.findOne({ username }, '-password').exec();
+    const user = await User.findOne({ username }, '-password').lean().exec();
 
     // Make sure the user exists
     if (!user) {
@@ -374,7 +374,7 @@ export const getUser = [
       commentDislikesCount,
       followersCount,
     };
-
+    
     res.json(enrichedUser);
   }),
 ];

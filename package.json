@@ -11,7 +11,8 @@
   "scripts": {
     "build": "pkgroll",
     "start": "node dist/app.mjs",
-    "dev": "tsx watch src/app.ts"
+    "dev": "tsx watch src/app.ts",
+    "test": "vitest"
   },
   "author": "dziubenzo",
   "license": "ISC",
@@ -20,9 +21,11 @@
     "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
     "@types/multer": "^1.4.12",
     "@types/passport": "^1.0.17",
     "@types/sanitize-html": "^2.13.0",
+    "@types/supertest": "^6.0.2",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.2.0",
     "compression": "^1.7.4",

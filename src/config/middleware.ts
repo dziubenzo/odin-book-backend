@@ -86,5 +86,5 @@ export const checkUserExistence = async (value: string, meta: Meta) => {
 
 // Make sure a new category cannot be named "new" so that it does not collide with the '/categories/new' route once created
 export const checkForNew = (value: string) => {
-  return value.toLowerCase() === 'new' ? true : false;
+  return value.toLowerCase() === 'new' ? false : true;
 };
