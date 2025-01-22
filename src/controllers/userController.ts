@@ -374,7 +374,7 @@ export const getUser = [
       commentDislikesCount,
       followersCount,
     };
-    
+
     res.json(enrichedUser);
   }),
 ];

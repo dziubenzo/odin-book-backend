@@ -57,7 +57,7 @@ export const createComment = [
       { new: true }
     )
       .populate({ path: 'author', select: 'username avatar' })
-      .populate({ path: 'category', select: 'name' })
+      .populate({ path: 'category', select: 'name slug' })
       .populate({ path: 'likes', select: 'username' })
       .populate({
         path: 'comments',
