@@ -238,7 +238,7 @@ export const updateFollowedCategories = [
     const categoryID = req.body.category_id;
     const username = req.params.username;
 
-    // Make sure the category exists and retrieve user
+    // Make sure the category to be followed/unfollowed exists and retrieve the logged in user
     const [categoryExists, user] = await Promise.all([
       Category.findById(categoryID).exec(),
       User.findOne({ username }, '-password').exec(),
@@ -297,7 +297,7 @@ export const updateFollowedUsers = [
       return;
     }
 
-    // Make sure the user exists and retrieve user
+    // Make sure the user to be followed/unfollowed exists and retrieve the logged in user
     const [userExists, user] = await Promise.all([
       User.findById(userID).exec(),
       User.findOne({ username }, '-password').exec(),

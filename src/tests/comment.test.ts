@@ -60,7 +60,7 @@ describe('POST /posts/:slug/comments', () => {
     });
 
     describe('valid comment', () => {
-      it('should return a 200 and the updated post that includes the new comment', async () => {
+      it('should return a 200 and the updated post with all necessary fields that includes the new comment as well ', async () => {
         await request(app)
           .post(`/posts/${post1.slug}/comments`)
           .auth(token, { type: 'bearer' })
@@ -68,11 +68,17 @@ describe('POST /posts/:slug/comments', () => {
           .send({ author: user1._id.toString(), content: 'Comment 1' })
           .expect('Content-Type', /json/)
           .expect((res) => {
-            expect(res.body.comments).toHaveLength(1);
+            expect(res.body.author).toBeDefined();
+            expect(res.body.author).toHaveProperty('username', user1.username);
+            expect(res.body.author).toHaveProperty('avatar', user1.avatar);
+            expect(res.body.category).toBeDefined();
+            expect(res.body.category).toHaveProperty('name', category1.name);
+            expect(res.body.category).toHaveProperty('slug', category1.slug);
             expect(res.body.comments[0]).toHaveProperty(
               'author._id',
               user1._id.toString()
             );
+            expect(res.body.likes).toHaveLength(0);
             expect(res.body.comments[0]).toHaveProperty('content', 'Comment 1');
           })
           .expect(200);
