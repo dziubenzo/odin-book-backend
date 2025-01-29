@@ -14,6 +14,7 @@ import {
   category1,
   category2,
   category3,
+  category4,
   longDescription,
   passwordUser1,
   user1,
@@ -105,6 +106,28 @@ describe('POST /categories', () => {
         .type('form')
         .send(category3)
         .expect(/successfully/i)
+        .expect(200);
+    });
+
+    it('should return a 200 and a success message for a category containing question marks in its name', async () => {
+      await request(app)
+        .post('/categories')
+        .auth(token, { type: 'bearer' })
+        .type('form')
+        .send(category4)
+        .expect(/successfully/i)
+        .expect(200);
+    });
+
+    it('should convert question marks into the qm string for its slug', async () => {
+      const expectedSlug = 'qmquestionqmmarks';
+
+      await request(app)
+        .get(`/categories/${expectedSlug}`)
+        .auth(token, { type: 'bearer' })
+        .expect((res) => {
+          expect(res.body).toHaveProperty('slug', expectedSlug);
+        })
         .expect(200);
     });
 

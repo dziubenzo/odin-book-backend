@@ -23,6 +23,11 @@ export const checkFirstCharacter = (value: string) => {
   return !(firstCharacter >= '0' && firstCharacter <= '9');
 };
 
+// Make sure that the username does not contain a question mark
+export const checkQuestionMark = (value: string) => {
+  return value.includes('?') ? false : true;
+};
+
 // Check if passwords match
 export const checkPasswordsEquality = (value: string, meta: Meta) => {
   const req = meta.req;

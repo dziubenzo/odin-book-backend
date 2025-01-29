@@ -92,6 +92,12 @@ export const category3 = {
   slug: slugify('Rabbits', { lower: true }),
 };
 
+export const category4 = {
+  name: '?Question?Marks',
+  description: 'Rabbit-ish category with question marks, yay!',
+  slug: slugify('?Question?Marks', { lower: true }),
+};
+
 export const longDescription =
   'Lorem ipsum dolor sit amet. Non numquam deserunt cum deserunt voluptatem sit iure eaque eos consectetur voluptatem aut similique corrupti et libero quos sed corrupti maxime. Vel rerum similique ea consequatur asperiores qui fugiat fugit est expedita praesentium et doloribus fugit ut veritatis consequatur et dolore nesciunt? Non corporis dolorum aut dolore quas At voluptate nesciunt ut saepe pariatur ut dolorem consequatur 33 deleniti deleniti! Et commodi laboriosam ut voluptatem inventore vel totam quod et suscipit rerum ea repellendus unde ad galisum quibusdam ex labore asperiores. Aut repellat sunt et facere voluptatem est dolorum culpa.';
 

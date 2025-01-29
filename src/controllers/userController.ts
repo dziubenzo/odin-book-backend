@@ -8,6 +8,7 @@ import { getFirstErrorMsg, getRandomAvatar } from '../config/helpers';
 import {
   checkFirstCharacter,
   checkPasswordsEquality,
+  checkQuestionMark,
   checkUsernameAvailability,
 } from '../config/middleware';
 import { upload } from '../config/multer';
@@ -39,6 +40,8 @@ export const createUser = [
     .withMessage('Username must contain between 3 and 16 characters')
     .custom(checkFirstCharacter)
     .withMessage('Username cannot start with a number')
+    .custom(checkQuestionMark)
+    .withMessage('Username cannot contain a question mark')
     .custom(checkUsernameAvailability)
     .withMessage('Username already taken'),
   body('password')

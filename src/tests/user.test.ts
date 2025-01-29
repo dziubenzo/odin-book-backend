@@ -124,6 +124,15 @@ describe('POST /users', () => {
         .expect(400);
     });
 
+    it('should return a 400 and an error message if the username contains a question mark', async () => {
+      await request(app)
+        .post('/users')
+        .type('form')
+        .send({ ...validCredentials, username: 'bad?username' })
+        .expect(/cannot contain a question mark/i)
+        .expect(400);
+    });
+
     it('should return a 400 and an error message if the username is already taken', async () => {
       await request(app)
         .post('/users')

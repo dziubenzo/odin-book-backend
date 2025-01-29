@@ -1,4 +1,4 @@
-import { Result, type ValidationError } from "express-validator";
+import { Result, type ValidationError } from 'express-validator';
 
 // Check for production environment
 export const isProduction = () => {
@@ -8,6 +8,11 @@ export const isProduction = () => {
 // Get error message of the first validation error
 export const getFirstErrorMsg = (errors: Result<ValidationError>) => {
   return errors.array({ onlyFirstError: true })[0].msg;
+};
+
+// Replace question marks in a category name with 'qm'
+export const replaceQuestionMarks = (name: string) => {
+  return name.replaceAll('?', 'qm');
 };
 
 // Default category icon

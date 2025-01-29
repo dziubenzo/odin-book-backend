@@ -3,7 +3,11 @@ import asyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
 import slugify from 'slugify';
 import { handleUpload } from '../config/cloudinary';
-import { defaultCategoryIcon, getFirstErrorMsg } from '../config/helpers';
+import {
+  defaultCategoryIcon,
+  getFirstErrorMsg,
+  replaceQuestionMarks,
+} from '../config/helpers';
 import {
   checkCategoryNameAvailability,
   checkFirstCharacter,
@@ -77,7 +81,7 @@ export const createCategory = [
       icon,
       description,
       created_at: Date.now(),
-      slug: slugify(name, { lower: true }),
+      slug: slugify(replaceQuestionMarks(name), { lower: true }),
     }).save();
 
     res.json('Category created successfully!');
